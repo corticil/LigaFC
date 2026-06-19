@@ -3,8 +3,9 @@ import { useMatches } from './hooks/useMatches';
 import MatchForm from './components/MatchForm';
 import MatchLog from './components/MatchLog';
 import StatsOverview from './components/StatsOverview';
+import Login from './components/Login';
 import { isLocalStorageMock } from './config/supabaseClient';
-import { Sparkles, Database, Code, ChevronDown, ChevronUp, Trophy, PlusCircle, History } from 'lucide-react';
+import { Sparkles, Database, Code, ChevronDown, ChevronUp, Trophy, PlusCircle, History, LogOut } from 'lucide-react';
 
 export default function App() {
   const {
@@ -17,8 +18,15 @@ export default function App() {
     stats
   } = useMatches();
 
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('ligafc_authenticated') === 'true';
+  });
   const [activeTab, setActiveTab] = useState('historial'); // 'historial' | 'registrar'
   const [showDbInstructions, setShowDbInstructions] = useState(false);
+
+  if (!isAuthenticated) {
+    return <Login onAuthenticate={setIsAuthenticated} />;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-emerald-500/30 selection:text-white">
@@ -45,7 +53,7 @@ export default function App() {
                 className="flex items-center gap-1.5 text-[11px] bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-semibold px-3 py-1.5 rounded-lg transition"
               >
                 <Database className="w-3.5 h-3.5" />
-                <span>Modo Local (localStorage)</span>
+                <span>Modo Local</span>
                 {showDbInstructions ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
               </button>
             ) : (
@@ -54,6 +62,19 @@ export default function App() {
                 <span>Supabase Conectado</span>
               </div>
             )}
+
+            {/* Botón de Cerrar Sesión */}
+            <button
+              onClick={() => {
+                localStorage.removeItem('ligafc_authenticated');
+                setIsAuthenticated(false);
+              }}
+              className="flex items-center gap-1.5 text-[11px] bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-650 border border-zinc-700 text-zinc-350 font-bold px-3 py-1.5 rounded-lg transition"
+              title="Cerrar sesión"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Cerrar Sesión</span>
+            </button>
           </div>
         </div>
       </header>
