@@ -1,11 +1,11 @@
 import { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useMatches } from './hooks/useMatches';
-import MatchForm from './components/MatchForm';
-import MatchLog from './components/MatchLog';
-import StatsOverview from './components/StatsOverview';
 import Login from './components/Login';
+import PublicView from './pages/PublicView';
+import AdminView from './pages/AdminView';
 import { isLocalStorageMock } from './config/supabaseClient';
-import { Sparkles, Database, Code, ChevronDown, ChevronUp, Trophy, PlusCircle, History, LogOut } from 'lucide-react';
+import { Database, Code, ChevronDown, ChevronUp, LogOut } from 'lucide-react';
 
 export default function App() {
   const {
@@ -21,12 +21,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem('ligafc_authenticated') === 'true';
   });
-  const [activeTab, setActiveTab] = useState('historial'); // 'historial' | 'registrar'
   const [showDbInstructions, setShowDbInstructions] = useState(false);
-
-  if (!isAuthenticated) {
-    return <Login onAuthenticate={setIsAuthenticated} />;
-  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-emerald-500/30 selection:text-white">
@@ -64,17 +59,19 @@ export default function App() {
             )}
 
             {/* Botón de Cerrar Sesión */}
-            <button
-              onClick={() => {
-                localStorage.removeItem('ligafc_authenticated');
-                setIsAuthenticated(false);
-              }}
-              className="flex items-center gap-1.5 text-[11px] bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-650 border border-zinc-700 text-zinc-350 font-bold px-3 py-1.5 rounded-lg transition"
-              title="Cerrar sesión"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Cerrar Sesión</span>
-            </button>
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  localStorage.removeItem('ligafc_authenticated');
+                  setIsAuthenticated(false);
+                }}
+                className="flex items-center gap-1.5 text-[11px] bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-650 border border-zinc-700 text-zinc-350 font-bold px-3 py-1.5 rounded-lg transition"
+                title="Cerrar sesión"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Cerrar Sesión</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -137,69 +134,35 @@ VITE_SUPABASE_ANON_KEY=tu_anon_key_de_supabase_aqui`}
           </div>
         )}
 
-        {/* Pestañas de Navegación */}
-        <div className="flex border-b border-zinc-900 max-w-md mx-auto bg-zinc-900/20 p-1 rounded-xl">
-          <button
-            onClick={() => setActiveTab('historial')}
-            className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-              activeTab === 'historial'
-                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/10'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
-            }`}
-          >
-            <History className="w-4 h-4" />
-            Historial y Stats
-          </button>
-          <button
-            onClick={() => setActiveTab('registrar')}
-            className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-              activeTab === 'registrar'
-                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/10'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
-            }`}
-          >
-            <PlusCircle className="w-4 h-4" />
-            Registrar Encuentro
-          </button>
-        </div>
-
-        {/* Contenido según la pestaña activa */}
-        <div className="transition-all duration-300">
-          {activeTab === 'historial' ? (
-            <div className="space-y-8 max-w-4xl mx-auto">
-              {/* Panel de Estadísticas */}
-              <section className="space-y-3">
-                <div className="flex items-center gap-2 pl-1">
-                  <Sparkles className="w-4 h-4 text-emerald-400" />
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Resumen y Métricas</h2>
-                </div>
-                <StatsOverview stats={stats} />
-              </section>
-
-              {/* Historial y Filtros */}
-              <section>
-                <MatchLog 
-                  filteredMatches={filteredMatches} 
-                  filters={filters} 
-                  onDeleteMatch={deleteMatch}
-                  loading={loading}
-                  error={error}
-                />
-              </section>
-            </div>
-          ) : (
-            <section className="max-w-2xl mx-auto py-4">
-              <MatchForm 
-                onAddMatch={addMatch} 
-                onSuccess={() => {
-                  setActiveTab('historial');
-                  // Limpiar filtros al redirigir para que el usuario pueda ver el nuevo partido de inmediato
-                  filters.clearFilters();
-                }} 
+        <Routes>
+          <Route path="/" element={
+            <PublicView 
+              stats={stats} 
+              filteredMatches={filteredMatches} 
+              filters={filters} 
+              loading={loading} 
+              error={error} 
+            />
+          } />
+          
+          <Route path="/admin" element={
+            isAuthenticated ? (
+              <AdminView 
+                stats={stats} 
+                filteredMatches={filteredMatches} 
+                filters={filters} 
+                loading={loading} 
+                error={error} 
+                addMatch={addMatch}
+                deleteMatch={deleteMatch}
               />
-            </section>
-          )}
-        </div>
+            ) : (
+              <Login onAuthenticate={setIsAuthenticated} />
+            )
+          } />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
       {/* Pie de Página */}

@@ -159,11 +159,19 @@ export function useMatches() {
     let p1Wins = 0;
     let p2Wins = 0;
     let draws = 0;
+    
+    let p1MaxStreak = 0;
+    let p2MaxStreak = 0;
+    let currentStreakPlayer = null;
+    let currentStreakCount = 0;
 
     const p1Filter = h2hPlayer1.trim().toLowerCase();
     const p2Filter = h2hPlayer2.trim().toLowerCase();
 
-    filteredMatches.forEach(m => {
+    // Iteramos de más antiguo a más reciente para calcular rachas correctamente
+    const chronologicalMatches = [...filteredMatches].reverse();
+
+    chronologicalMatches.forEach(m => {
       const g1 = m.goles_1;
       const g2 = m.goles_2;
       totalGoals += (g1 + g2);
@@ -180,10 +188,29 @@ export function useMatches() {
         const isP1Jugador1 = m.jugador_1.toLowerCase() === p1Filter;
         if (g1 === g2) {
           draws++;
-        } else if (g1 > g2) {
-          isP1Jugador1 ? p1Wins++ : p2Wins++;
+          currentStreakPlayer = null;
+          currentStreakCount = 0;
         } else {
-          isP1Jugador1 ? p2Wins++ : p1Wins++;
+          const winner = (g1 > g2) ? (isP1Jugador1 ? 'p1' : 'p2') : (isP1Jugador1 ? 'p2' : 'p1');
+          
+          if (winner === 'p1') {
+            p1Wins++;
+          } else {
+            p2Wins++;
+          }
+
+          if (currentStreakPlayer === winner) {
+            currentStreakCount++;
+          } else {
+            currentStreakPlayer = winner;
+            currentStreakCount = 1;
+          }
+
+          if (winner === 'p1' && currentStreakCount > p1MaxStreak) {
+            p1MaxStreak = currentStreakCount;
+          } else if (winner === 'p2' && currentStreakCount > p2MaxStreak) {
+            p2MaxStreak = currentStreakCount;
+          }
         }
       }
     });
@@ -205,7 +232,9 @@ export function useMatches() {
         p2WinPct: ((p2Wins / total) * 100).toFixed(0),
         drawPct: ((draws / total) * 100).toFixed(0),
         winDiff: Math.abs(p1Wins - p2Wins),
-        leader: p1Wins > p2Wins ? h2hPlayer1 : p2Wins > p1Wins ? h2hPlayer2 : null
+        leader: p1Wins > p2Wins ? h2hPlayer1 : p2Wins > p1Wins ? h2hPlayer2 : null,
+        p1MaxStreak,
+        p2MaxStreak
       } : null
     };
   }, [filteredMatches, h2hPlayer1, h2hPlayer2]);

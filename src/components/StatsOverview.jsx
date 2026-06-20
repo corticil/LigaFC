@@ -1,5 +1,5 @@
 import { getTeamById } from '../data/teams';
-import { Award, BarChart3, HelpCircle, TrendingUp } from 'lucide-react';
+import { Award, BarChart3, HelpCircle, TrendingUp, Flame } from 'lucide-react';
 
 export default function StatsOverview({ stats }) {
   const { totalMatches, avgGoals, biggestWin, h2h } = stats;
@@ -100,7 +100,7 @@ export default function StatsOverview({ stats }) {
       )}
 
       {/* Grid de Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${h2h ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
         {/* Partidos Jugados */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center justify-between shadow-md">
           <div>
@@ -144,6 +144,26 @@ export default function StatsOverview({ stats }) {
             <Award className="w-6 h-6" />
           </div>
         </div>
+
+        {/* Mayor Racha H2H */}
+        {h2h && (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center justify-between shadow-md">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-zinc-500 font-medium">Mayor Racha (H2H)</p>
+              <div className="mt-1 flex flex-col gap-0.5">
+                <p className="text-sm font-bold text-indigo-400 truncate">
+                  {h2h.player1}: {h2h.p1MaxStreak} <span className="text-[10px] text-zinc-500 font-normal">wins</span>
+                </p>
+                <p className="text-sm font-bold text-purple-400 truncate">
+                  {h2h.player2}: {h2h.p2MaxStreak} <span className="text-[10px] text-zinc-500 font-normal">wins</span>
+                </p>
+              </div>
+            </div>
+            <div className="p-2.5 bg-rose-500/10 rounded-lg text-rose-400 ml-2">
+              <Flame className="w-6 h-6" />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

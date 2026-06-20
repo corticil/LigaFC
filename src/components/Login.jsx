@@ -14,7 +14,7 @@ export default function Login({ onAuthenticate }) {
     // Obtener la contraseña de la variable de entorno, con fallback a 'ligafc'
     const correctPassword = import.meta.env.VITE_APP_PASSWORD || 'ligafc';
 
-    if (password === correctPassword) {
+    if (password.trim() === correctPassword.trim()) {
       // Éxito
       localStorage.setItem('ligafc_authenticated', 'true');
       onAuthenticate(true);

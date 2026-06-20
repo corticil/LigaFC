@@ -7,7 +7,8 @@ export default function MatchLog({
   filters, 
   onDeleteMatch,
   loading,
-  error
+  error,
+  readOnly = false
 }) {
   const {
     h2hPlayer1,
@@ -35,7 +36,7 @@ export default function MatchLog({
   return (
     <div className="space-y-6">
       {/* Contenedor de Filtros */}
-      <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 shadow-xl backdrop-blur-md">
+      <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-md">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
@@ -158,14 +159,14 @@ export default function MatchLog({
                   className="bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700/80 rounded-xl p-4 transition-all duration-300 shadow-md group relative overflow-hidden"
                 >
                   {/* Tarjeta del Encuentro */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center justify-between gap-2 sm:gap-4">
                     {/* Jugador 1 y Equipo */}
-                    <div className={`flex items-center justify-end flex-1 w-full gap-3 ${winner === 1 ? 'opacity-100' : winner === 2 ? 'opacity-50' : 'opacity-90'}`}>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-white tracking-wide">{match.jugador_1}</p>
-                        <p className="text-xs text-zinc-500">{team1?.name || 'Equipo Desconocido'}</p>
+                    <div className={`flex items-center justify-end flex-1 w-full gap-2 sm:gap-3 ${winner === 1 ? 'opacity-100' : winner === 2 ? 'opacity-50' : 'opacity-90'}`}>
+                      <div className="text-right min-w-0">
+                        <p className="text-[11px] sm:text-sm font-bold text-white tracking-wide truncate">{match.jugador_1}</p>
+                        <p className="text-[9px] sm:text-xs text-zinc-500 truncate hidden sm:block">{team1?.name || 'Equipo Desconocido'}</p>
                       </div>
-                      <div className="w-10 h-10 bg-zinc-950 rounded-lg p-1.5 flex items-center justify-center border border-zinc-800/80">
+                      <div className="w-7 h-7 sm:w-10 sm:h-10 bg-zinc-950 rounded-lg p-1 sm:p-1.5 flex items-center justify-center border border-zinc-800/80 flex-shrink-0">
                         {team1 ? (
                           <img 
                             src={team1.logoUrl} 
@@ -180,17 +181,17 @@ export default function MatchLog({
                     </div>
 
                     {/* Marcador */}
-                    <div className="flex flex-col items-center justify-center min-w-[100px]">
-                      <div className="flex items-center gap-3">
-                        <span className={`text-2xl font-black px-3 py-1 rounded-lg ${
+                    <div className="flex flex-col items-center justify-center flex-shrink-0 min-w-[70px] sm:min-w-[100px]">
+                      <div className="flex items-center gap-1.5 sm:gap-3">
+                        <span className={`text-base sm:text-2xl font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg ${
                           winner === 1 
                             ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
                             : 'bg-zinc-950 text-zinc-400 border border-zinc-800/50'
                         }`}>
                           {match.goles_1}
                         </span>
-                        <span className="text-xs font-semibold text-zinc-600">-</span>
-                        <span className={`text-2xl font-black px-3 py-1 rounded-lg ${
+                        <span className="text-[10px] sm:text-xs font-semibold text-zinc-600">-</span>
+                        <span className={`text-base sm:text-2xl font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg ${
                           winner === 2 
                             ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
                             : 'bg-zinc-950 text-zinc-400 border border-zinc-800/50'
@@ -198,15 +199,15 @@ export default function MatchLog({
                           {match.goles_2}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 mt-2 text-[10px] text-zinc-500">
-                        <Calendar className="w-3 h-3 text-zinc-600" />
+                      <div className="flex items-center gap-1 mt-1 sm:mt-2 text-[9px] sm:text-[10px] text-zinc-500">
+                        <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-zinc-600" />
                         <span>{formatDate(match.fecha)}</span>
                       </div>
                     </div>
 
                     {/* Jugador 2 y Equipo */}
-                    <div className={`flex items-center justify-start flex-1 w-full gap-3 ${winner === 2 ? 'opacity-100' : winner === 1 ? 'opacity-50' : 'opacity-90'}`}>
-                      <div className="w-10 h-10 bg-zinc-950 rounded-lg p-1.5 flex items-center justify-center border border-zinc-800/80">
+                    <div className={`flex items-center justify-start flex-1 w-full gap-2 sm:gap-3 ${winner === 2 ? 'opacity-100' : winner === 1 ? 'opacity-50' : 'opacity-90'}`}>
+                      <div className="w-7 h-7 sm:w-10 sm:h-10 bg-zinc-950 rounded-lg p-1 sm:p-1.5 flex items-center justify-center border border-zinc-800/80 flex-shrink-0">
                         {team2 ? (
                           <img 
                             src={team2.logoUrl} 
@@ -218,9 +219,9 @@ export default function MatchLog({
                           <Shield className="w-5 h-5 text-zinc-600" />
                         )}
                       </div>
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-white tracking-wide">{match.jugador_2}</p>
-                        <p className="text-xs text-zinc-500">{team2?.name || 'Equipo Desconocido'}</p>
+                      <div className="text-left min-w-0">
+                        <p className="text-[11px] sm:text-sm font-bold text-white tracking-wide truncate">{match.jugador_2}</p>
+                        <p className="text-[9px] sm:text-xs text-zinc-500 truncate hidden sm:block">{team2?.name || 'Equipo Desconocido'}</p>
                       </div>
                     </div>
                   </div>
@@ -234,17 +235,19 @@ export default function MatchLog({
                   )}
 
                   {/* Botón de eliminar (visible al hacer hover) */}
-                  <button
-                    onClick={() => {
-                      if (confirm('¿Estás seguro de que quieres eliminar este partido?')) {
-                        onDeleteMatch(match.id);
-                      }
-                    }}
-                    className="absolute top-2 right-2 p-1.5 rounded-lg text-zinc-600 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200"
-                    title="Eliminar partido"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {!readOnly && (
+                    <button
+                      onClick={() => {
+                        if (confirm('¿Estás seguro de que quieres eliminar este partido?')) {
+                          onDeleteMatch(match.id);
+                        }
+                      }}
+                      className="absolute top-2 right-2 p-1.5 rounded-lg text-zinc-600 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                      title="Eliminar partido"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               );
             })}
