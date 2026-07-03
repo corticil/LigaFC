@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { PLAYERS } from '../data/players';
-import { Grid } from 'lucide-react';
+import { Grid, Download, Check } from 'lucide-react';
+import { toPng } from 'html-to-image';
 
 export default function H2HMatrix({ matches }) {
   const matrix = useMemo(() => {
@@ -44,18 +45,73 @@ export default function H2HMatrix({ matches }) {
     return mat;
   }, [matches]);
 
+  const matrixRef = useRef(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+
+  const handleDownload = async () => {
+    if (!matrixRef.current) return;
+    try {
+      setIsDownloading(true);
+      
+      // Añadir clase temporalmente para ocultar las barras de desplazamiento
+      matrixRef.current.classList.add('hide-scrollbars');
+
+      const dataUrl = await toPng(matrixRef.current, {
+        backgroundColor: '#09090b', // Color de fondo del body
+        pixelRatio: 2, // Mejor resolución
+        filter: (node) => {
+          // Ignorar elementos marcados para no descargar (como el botón)
+          if (node.hasAttribute && node.hasAttribute('data-exclude')) {
+            return false;
+          }
+          return true;
+        }
+      });
+
+      // Quitar clase
+      matrixRef.current.classList.remove('hide-scrollbars');
+
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `LigaFC_Matriz_H2H.png`;
+      link.click();
+      
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 2000);
+    } catch (err) {
+      console.error('Error al descargar la matriz:', err);
+      if (matrixRef.current) matrixRef.current.classList.remove('hide-scrollbars');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   if (!matches || matches.length === 0) return null;
 
   return (
-    <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-md">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
-          <Grid className="w-5 h-5" />
+    <div ref={matrixRef} className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-md relative">
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+            <Grid className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white tracking-wide">Matriz de Enfrentamientos</h2>
+            <p className="text-xs text-zinc-500">Historial directo (Victorias - Empates - Derrotas)</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-white tracking-wide">Matriz de Enfrentamientos</h2>
-          <p className="text-xs text-zinc-500">Historial directo (Victorias - Empates - Derrotas)</p>
-        </div>
+
+        <button
+          onClick={handleDownload}
+          disabled={isDownloading}
+          data-exclude="true"
+          className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white px-3 py-1.5 rounded-lg border border-zinc-700 transition text-xs font-semibold"
+          title="Descargar matriz como imagen"
+        >
+          {downloaded ? <Check className="w-4 h-4 text-emerald-400" /> : <Download className="w-4 h-4" />}
+          <span className="hidden sm:inline">{downloaded ? '¡Guardado!' : 'Descargar'}</span>
+        </button>
       </div>
 
       <div className="overflow-x-auto">

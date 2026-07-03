@@ -1,7 +1,10 @@
 import { teams, getTeamById } from '../data/teams';
 import { PLAYERS } from '../data/players';
 import { Calendar, Trash2, Users, Shield, RotateCcw, AlertCircle } from 'lucide-react';
-
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { format, parse } from 'date-fns';
+import { es } from 'date-fns/locale';
 export default function MatchLog({ 
   filteredMatches, 
   filters, 
@@ -17,10 +20,14 @@ export default function MatchLog({
     setH2hPlayer2,
     filterTeamId,
     setFilterTeamId,
+    filterDateFrom,
+    setFilterDateFrom,
+    filterDateTo,
+    setFilterDateTo,
     clearFilters
   } = filters;
 
-  const hasActiveFilters = h2hPlayer1 || h2hPlayer2 || filterTeamId;
+  const hasActiveFilters = h2hPlayer1 || h2hPlayer2 || filterTeamId || filterDateFrom || filterDateTo;
 
   // Formatear fecha de forma legible
   const formatDate = (dateStr) => {
@@ -59,7 +66,7 @@ export default function MatchLog({
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Filtro Head to Head */}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Filtro Head-to-Head (Cara a Cara)</h3>
@@ -118,6 +125,39 @@ export default function MatchLog({
                   </option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          {/* Filtro por Fecha */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Filtro por Fecha</h3>
+            <div className="flex items-center gap-2">
+              <DatePicker
+                selected={filterDateFrom ? parse(filterDateFrom, 'yyyy-MM-dd', new Date()) : null}
+                onChange={(date) => setFilterDateFrom(date ? format(date, 'yyyy-MM-dd') : '')}
+                selectsStart
+                startDate={filterDateFrom ? parse(filterDateFrom, 'yyyy-MM-dd', new Date()) : null}
+                endDate={filterDateTo ? parse(filterDateTo, 'yyyy-MM-dd', new Date()) : null}
+                placeholderText="Desde"
+                locale={es}
+                dateFormat="dd/MM/yyyy"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-[7px] px-2 text-[10px] sm:text-xs text-white focus:outline-none focus:border-indigo-500 transition text-center"
+                wrapperClassName="w-full"
+              />
+              <span className="text-xs font-bold text-zinc-600">-</span>
+              <DatePicker
+                selected={filterDateTo ? parse(filterDateTo, 'yyyy-MM-dd', new Date()) : null}
+                onChange={(date) => setFilterDateTo(date ? format(date, 'yyyy-MM-dd') : '')}
+                selectsEnd
+                startDate={filterDateFrom ? parse(filterDateFrom, 'yyyy-MM-dd', new Date()) : null}
+                endDate={filterDateTo ? parse(filterDateTo, 'yyyy-MM-dd', new Date()) : null}
+                minDate={filterDateFrom ? parse(filterDateFrom, 'yyyy-MM-dd', new Date()) : null}
+                placeholderText="Hasta"
+                locale={es}
+                dateFormat="dd/MM/yyyy"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-[7px] px-2 text-[10px] sm:text-xs text-white focus:outline-none focus:border-indigo-500 transition text-center"
+                wrapperClassName="w-full"
+              />
             </div>
           </div>
         </div>

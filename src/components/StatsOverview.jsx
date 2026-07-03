@@ -1,8 +1,8 @@
 import { getTeamById } from '../data/teams';
-import { Award, BarChart3, HelpCircle, TrendingUp, Flame } from 'lucide-react';
+import { Award, BarChart3, HelpCircle, TrendingUp, Flame, Star } from 'lucide-react';
 
 export default function StatsOverview({ stats }) {
-  const { totalMatches, avgGoals, biggestWin, h2h } = stats;
+  const { totalMatches, avgGoals, biggestWin, topScorer, h2h } = stats;
 
   if (totalMatches === 0) {
     return (
@@ -100,7 +100,7 @@ export default function StatsOverview({ stats }) {
       )}
 
       {/* Grid de Estadísticas */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${h2h ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${h2h ? 'lg:grid-cols-3 xl:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
         {/* Partidos Jugados */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center justify-between shadow-md">
           <div>
@@ -142,6 +142,28 @@ export default function StatsOverview({ stats }) {
           </div>
           <div className="p-2.5 bg-amber-500/10 rounded-lg text-amber-400">
             <Award className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Máximo Goleador */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center justify-between shadow-md">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-zinc-500 font-medium">Mayor Goleador (Partido)</p>
+            {topScorer ? (
+              <div className="mt-1 truncate">
+                <p className="text-sm font-bold text-yellow-400">
+                  {topScorer.player}: {topScorer.goals} <span className="text-[10px] text-zinc-500 font-normal">goles</span>
+                </p>
+                <p className="text-[10px] text-zinc-500 truncate mt-0.5">
+                  vs {topScorer.player === topScorer.match.jugador_1 ? topScorer.match.jugador_2 : topScorer.match.jugador_1}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm font-bold text-white mt-1">N/A</p>
+            )}
+          </div>
+          <div className="p-2.5 bg-yellow-500/10 rounded-lg text-yellow-400">
+            <Star className="w-6 h-6" />
           </div>
         </div>
 

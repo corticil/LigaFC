@@ -10,6 +10,8 @@ export function useMatches() {
   const [h2hPlayer1, setH2hPlayer1] = useState('');
   const [h2hPlayer2, setH2hPlayer2] = useState('');
   const [filterTeamId, setFilterTeamId] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
 
   // Cargar partidos al iniciar
   const fetchMatches = async () => {
@@ -135,9 +137,13 @@ export function useMatches() {
         }
       }
 
+      // 3. Filtro por Fecha
+      if (filterDateFrom && match.fecha < filterDateFrom) return false;
+      if (filterDateTo && match.fecha > filterDateTo) return false;
+
       return true;
     });
-  }, [matches, h2hPlayer1, h2hPlayer2, filterTeamId]);
+  }, [matches, h2hPlayer1, h2hPlayer2, filterTeamId, filterDateFrom, filterDateTo]);
 
   // Cómputo de Estadísticas del historial filtrado o general
   const stats = useMemo(() => {
@@ -147,6 +153,7 @@ export function useMatches() {
         totalMatches: 0,
         avgGoals: 0,
         biggestWin: null,
+        topScorer: null,
         h2h: null
       };
     }
@@ -154,6 +161,9 @@ export function useMatches() {
     let totalGoals = 0;
     let maxDiff = -1;
     let biggestWinMatch = null;
+    
+    let maxGoalsInSingleMatch = -1;
+    let topScorerInSingleMatch = null;
 
     // Métricas para H2H si están ambos jugadores seleccionados
     let p1Wins = 0;
@@ -181,6 +191,16 @@ export function useMatches() {
       if (diff > maxDiff) {
         maxDiff = diff;
         biggestWinMatch = m;
+      }
+
+      // Máximo Goleador en un Partido
+      if (g1 > maxGoalsInSingleMatch) {
+        maxGoalsInSingleMatch = g1;
+        topScorerInSingleMatch = { player: m.jugador_1, goals: g1, match: m };
+      }
+      if (g2 > maxGoalsInSingleMatch) {
+        maxGoalsInSingleMatch = g2;
+        topScorerInSingleMatch = { player: m.jugador_2, goals: g2, match: m };
       }
 
       // Estadísticas H2H
@@ -222,6 +242,7 @@ export function useMatches() {
         match: biggestWinMatch,
         diff: maxDiff
       } : null,
+      topScorer: topScorerInSingleMatch ? topScorerInSingleMatch : null,
       h2h: (p1Filter && p2Filter) ? {
         player1: h2hPlayer1,
         player2: h2hPlayer2,
@@ -255,10 +276,16 @@ export function useMatches() {
       setH2hPlayer2,
       filterTeamId,
       setFilterTeamId,
+      filterDateFrom,
+      setFilterDateFrom,
+      filterDateTo,
+      setFilterDateTo,
       clearFilters: () => {
         setH2hPlayer1('');
         setH2hPlayer2('');
         setFilterTeamId('');
+        setFilterDateFrom('');
+        setFilterDateTo('');
       }
     },
     stats
