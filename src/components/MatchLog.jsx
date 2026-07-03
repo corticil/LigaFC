@@ -1,10 +1,12 @@
+import React, { useRef, useState } from 'react';
 import { teams, getTeamById } from '../data/teams';
 import { PLAYERS } from '../data/players';
-import { Calendar, Trash2, Users, Shield, RotateCcw, AlertCircle } from 'lucide-react';
+import { Calendar, Trash2, Users, Shield, RotateCcw, AlertCircle, Download, Check } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { toPng } from 'html-to-image';
 export default function MatchLog({ 
   filteredMatches, 
   filters, 
@@ -38,6 +40,43 @@ export default function MatchLog({
       month: 'short', 
       day: 'numeric' 
     });
+  };
+
+  const historyRef = useRef(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+
+  const handleDownload = async () => {
+    if (!historyRef.current) return;
+    try {
+      setIsDownloading(true);
+      historyRef.current.classList.add('hide-scrollbars', 'add-capture-padding');
+      
+      const dataUrl = await toPng(historyRef.current, {
+        backgroundColor: '#09090b',
+        pixelRatio: 2,
+        imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+        filter: (node) => {
+          if (node.hasAttribute && node.hasAttribute('data-exclude')) return false;
+          return true;
+        }
+      });
+      
+      historyRef.current.classList.remove('hide-scrollbars', 'add-capture-padding');
+      
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `LigaFC_Historial.png`;
+      link.click();
+      
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 2000);
+    } catch (err) {
+      console.error('Error al descargar el historial:', err);
+      if (historyRef.current) historyRef.current.classList.remove('hide-scrollbars', 'add-capture-padding');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -164,10 +203,25 @@ export default function MatchLog({
       </div>
 
       {/* Historial de Partidos */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest pl-1">
-          Historial de Partidos ({filteredMatches.length})
-        </h3>
+      <div className="space-y-4" ref={historyRef}>
+        <div className="flex items-center justify-between pl-1">
+          <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">
+            Historial de Partidos ({filteredMatches.length})
+          </h3>
+          
+          {filteredMatches.length > 0 && (
+            <button
+              onClick={handleDownload}
+              disabled={isDownloading}
+              data-exclude="true"
+              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white px-3 py-1.5 rounded-lg border border-zinc-700 transition text-xs font-semibold"
+              title="Descargar historial como imagen"
+            >
+              {downloaded ? <Check className="w-4 h-4 text-emerald-400" /> : <Download className="w-4 h-4" />}
+              <span className="hidden sm:inline">{downloaded ? '¡Guardado!' : 'Descargar'}</span>
+            </button>
+          )}
+        </div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12 space-y-3">
@@ -212,7 +266,7 @@ export default function MatchLog({
                             src={team1.logoUrl} 
                             alt={team1.name} 
                             className="w-full h-full object-contain"
-                            onError={(e) => { e.target.src = 'https://crests.football-data.org/none.png'; }}
+                            onError={(e) => { e.target.src = '/logos/real-madrid.svg'; }}
                           />
                         ) : (
                           <Shield className="w-5 h-5 text-zinc-600" />
@@ -253,7 +307,7 @@ export default function MatchLog({
                             src={team2.logoUrl} 
                             alt={team2.name} 
                             className="w-full h-full object-contain"
-                            onError={(e) => { e.target.src = 'https://crests.football-data.org/none.png'; }}
+                            onError={(e) => { e.target.src = '/logos/real-madrid.svg'; }}
                           />
                         ) : (
                           <Shield className="w-5 h-5 text-zinc-600" />

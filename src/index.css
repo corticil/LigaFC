@@ -94,3 +94,10 @@ body {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
+
+/* Aplicar padding y fondo oscuro justo antes de capturar la imagen para que html-to-image calcule bien el tamaño */
+.add-capture-padding {
+  padding: 24px !important;
+  background-color: #09090b !important;
+  border-radius: 16px !important;
+}
