@@ -1,3 +1,12 @@
+function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks).toString()));
+    req.on('error', reject);
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -10,12 +19,10 @@ export default async function handler(req, res) {
   }
 
   try {
+    const rawBody = await getRawBody(req);
     let parsed;
-    if (typeof req.body === 'string') {
-      try { parsed = JSON.parse(req.body); } catch { parsed = {}; }
-    } else {
-      parsed = req.body || {};
-    }
+    try { parsed = JSON.parse(rawBody); } catch { parsed = {}; }
+
     const model = parsed?.model || 'gemini-2.5-flash';
     const allowedModels = ['gemini-2.5-flash', 'gemini-3.1-flash-lite'];
     const resolvedModel = allowedModels.includes(model) ? model : 'gemini-2.5-flash';
