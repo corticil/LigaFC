@@ -171,6 +171,9 @@ export async function extractStatsFromImage(imageFile, model = GEMINI_MODELS.fla
  * @returns {Promise<Object>} Registro guardado
  */
 export async function saveStatsToSupabase(statsData, partidoId) {
+  const { data: { session } } = await supabase.auth.getSession();
+  console.log('%c[Gemini] Session before save:', 'background:#222;color:#f59e0b;font-weight:bold', session ? { user: session.user.email, role: session.user.role } : 'NO SESSION');
+
   const { data, error } = await supabase.from('partidos_stats').insert([{
     partido_id: partidoId || null,
     nombre_local: statsData.nombre_local,
