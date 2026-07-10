@@ -111,7 +111,7 @@ export default function MatchLog({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Filtro Head to Head */}
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Filtro Head-to-Head (Cara a Cara)</h3>
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Filtro Cara a Cara</h3>
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <select
