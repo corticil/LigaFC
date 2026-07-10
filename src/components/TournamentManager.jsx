@@ -92,7 +92,7 @@ export default function TournamentManager({
 
       {/* Lista de Torneos */}
       {tournaments.length > 0 && !showForm && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {tournaments.map(t => {
             const isActive = t.id === activeTournamentId;
             const matchCount = allMatches?.filter(m => m.torneo_id === t.id).length || 0;
@@ -246,7 +246,8 @@ export default function TournamentManager({
 
           {/* Grid de Posiciones */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[600px]">
+            {/* Desktop: Table */}
+            <table className="w-full text-left border-collapse min-w-[600px] hidden sm:table">
               <thead>
                 <tr className="bg-zinc-950/50 text-zinc-400 text-[10px] uppercase tracking-wider font-semibold">
                   <th className="p-4 w-12 text-center">Pos</th>
@@ -312,6 +313,54 @@ export default function TournamentManager({
                 })}
               </tbody>
             </table>
+
+            {/* Mobile: Cards */}
+            <div className="sm:hidden divide-y divide-zinc-800/50">
+              {standings.map((stat, index) => {
+                const isLeader = index === 0 && stat.pld > 0;
+                return (
+                  <div 
+                    key={stat.player}
+                    className={`p-4 transition-colors ${
+                      isLeader ? 'bg-yellow-500/5' : ''
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {isLeader ? (
+                          <div className="w-5 h-5 bg-yellow-500/20 text-yellow-400 rounded-full flex items-center justify-center">
+                            <Crown className="w-3 h-3" />
+                          </div>
+                        ) : index === 1 && stat.pld > 0 ? (
+                          <div className="w-5 h-5 bg-zinc-400/20 text-zinc-400 rounded-full flex items-center justify-center">
+                            <Medal className="w-3 h-3" />
+                          </div>
+                        ) : index === 2 && stat.pld > 0 ? (
+                          <div className="w-5 h-5 bg-amber-700/20 text-amber-600 rounded-full flex items-center justify-center">
+                            <Medal className="w-3 h-3" />
+                          </div>
+                        ) : (
+                          <span className="w-5 h-5 flex items-center justify-center text-zinc-500 font-bold text-xs">{index + 1}</span>
+                        )}
+                        <span className={`text-sm font-bold ${isLeader ? 'text-yellow-400' : 'text-white'}`}>
+                          {stat.player}
+                        </span>
+                      </div>
+                      <span className={`text-lg font-black ${isLeader ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                        {stat.pts} <span className="text-[10px] font-bold text-zinc-500">PTS</span>
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-5 gap-2 text-center text-[10px] text-zinc-500">
+                      <div><span className="font-bold text-zinc-300">{stat.pld}</span> PJ</div>
+                      <div><span className="font-bold text-emerald-400">{stat.w}</span> V</div>
+                      <div><span className="font-bold text-zinc-400">{stat.d}</span> E</div>
+                      <div><span className="font-bold text-rose-400">{stat.l}</span> D</div>
+                      <div><span className="font-bold text-zinc-300">{stat.gd > 0 ? `+${stat.gd}` : stat.gd}</span> DIF</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
           
           {standings.every(s => s.pld === 0) && (

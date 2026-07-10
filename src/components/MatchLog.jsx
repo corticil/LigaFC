@@ -207,9 +207,9 @@ export default function MatchLog({
 
       {/* Historial de Partidos */}
       <div className="space-y-4" ref={historyRef}>
-        <div className="flex items-center justify-between pl-1">
+        <div className="flex items-center justify-between gap-2 pl-1">
           <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">
-            Historial de Partidos ({filteredMatches.length})
+            Historial ({filteredMatches.length})
           </h3>
           
           {filteredMatches.length > 0 && (
@@ -217,7 +217,7 @@ export default function MatchLog({
               onClick={handleDownload}
               disabled={isDownloading}
               data-exclude="true"
-              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white px-3 py-1.5 rounded-lg border border-zinc-700 transition text-xs font-semibold"
+              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white px-3 py-1.5 rounded-lg border border-zinc-700 transition text-xs font-semibold flex-shrink-0"
               title="Descargar historial como imagen"
             >
               {downloaded ? <Check className="w-4 h-4 text-emerald-400" /> : <Download className="w-4 h-4" />}
@@ -345,7 +345,7 @@ export default function MatchLog({
                     </div>
                   )}
 
-                  {/* Botón de eliminar (visible al hacer hover) */}
+                  {/* Botón de eliminar (visible en mobile, hover en desktop) */}
                   {!readOnly && (
                     <button
                       onClick={() => {
@@ -353,7 +353,7 @@ export default function MatchLog({
                           onDeleteMatch(match.id);
                         }
                       }}
-                      className="absolute top-2 right-2 p-1.5 rounded-lg text-zinc-600 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                      className="absolute top-2 right-2 p-2 sm:p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200"
                       title="Eliminar partido"
                     >
                       <Trash2 className="w-4 h-4" />

@@ -315,11 +315,11 @@ export default function StatsUploader({ onAddMatch, tournaments = [] }) {
 
         <div className="flex gap-3">
           <button onClick={reset}
-            className="flex-1 py-3 rounded-xl text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition flex items-center justify-center gap-2">
+            className="flex-1 py-3.5 rounded-xl text-[11px] sm:text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition flex items-center justify-center gap-2">
             <RotateCcw className="w-4 h-4" /> Cancelar
           </button>
           <button onClick={handleConfirm} disabled={status === 'saving'}
-            className="flex-1 py-3 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50">
+            className="flex-1 py-3.5 rounded-xl text-[11px] sm:text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 disabled:opacity-50">
             {status === 'saving' ? <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</> : <><FileCheck className="w-4 h-4" /> Confirmar y Guardar</>}
           </button>
         </div>
@@ -377,9 +377,9 @@ export default function StatsUploader({ onAddMatch, tournaments = [] }) {
               role="switch"
               aria-checked={ocrMode}
               onClick={() => setOcrMode(prev => !prev)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${ocrMode ? 'bg-yellow-500' : 'bg-emerald-500'}`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${ocrMode ? 'bg-yellow-500' : 'bg-emerald-500'}`}
             >
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${ocrMode ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${ocrMode ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
             </button>
             <span className={`text-[10px] font-medium uppercase tracking-wider ${ocrMode ? 'text-yellow-400' : 'text-zinc-600'}`}>
               OCR Tesseract
@@ -388,18 +388,18 @@ export default function StatsUploader({ onAddMatch, tournaments = [] }) {
 
           {!ocrMode && (
             <div className="flex items-center justify-center gap-2 px-1 pt-1">
-              <span className="text-[10px] text-zinc-600">Modelo:</span>
+              <span className="text-[11px] text-zinc-600">Modelo:</span>
               <button
                 onClick={() => setGeminiModel(GEMINI_MODELS.flash)}
-                className={`text-[10px] px-2.5 py-1 rounded-full font-medium transition ${geminiModel === GEMINI_MODELS.flash ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-zinc-800 text-zinc-500 border border-zinc-700 hover:text-zinc-300'}`}
+                className={`text-[11px] px-3 py-1.5 rounded-full font-medium transition ${geminiModel === GEMINI_MODELS.flash ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-zinc-800 text-zinc-500 border border-zinc-700 hover:text-zinc-300'}`}
               >
-                Flash (250/día)
+                Flash
               </button>
               <button
                 onClick={() => setGeminiModel(GEMINI_MODELS.flashLite)}
-                className={`text-[10px] px-2.5 py-1 rounded-full font-medium transition ${geminiModel === GEMINI_MODELS.flashLite ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-zinc-800 text-zinc-500 border border-zinc-700 hover:text-zinc-300'}`}
+                className={`text-[11px] px-3 py-1.5 rounded-full font-medium transition ${geminiModel === GEMINI_MODELS.flashLite ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-zinc-800 text-zinc-500 border border-zinc-700 hover:text-zinc-300'}`}
               >
-                Flash-Lite (1000/día)
+                Flash-Lite
               </button>
             </div>
           )}

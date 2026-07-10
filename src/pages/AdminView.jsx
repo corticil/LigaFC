@@ -34,49 +34,49 @@ export default function AdminView({
       </div>
 
       {/* Pestañas de Navegación */}
-      <div className="flex border-b border-zinc-900 max-w-lg mx-auto bg-zinc-900/20 p-1 rounded-xl">
+      <div className="grid grid-cols-2 sm:flex border-b border-zinc-900 max-w-lg mx-auto bg-zinc-900/20 p-1 rounded-xl gap-1">
         <button
           onClick={() => setActiveTab('registrar')}
-          className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`py-2.5 px-3 rounded-lg text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'registrar'
               ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/10'
               : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
           }`}
         >
-          <PlusCircle className="w-4 h-4" />
-          Registrar Partido
+          <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          Registrar
         </button>
         <button
           onClick={() => setActiveTab('stats-ai')}
-          className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`py-2.5 px-3 rounded-lg text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'stats-ai'
               ? 'bg-purple-500 text-purple-950 shadow-md shadow-purple-500/10'
               : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
           }`}
         >
-          <Sparkles className="w-4 h-4" />
+          <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           Stats AI
         </button>
         <button
           onClick={() => setActiveTab('torneos')}
-          className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`py-2.5 px-3 rounded-lg text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'torneos'
               ? 'bg-yellow-500 text-yellow-950 shadow-md shadow-yellow-500/10'
               : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
           }`}
         >
-          <Trophy className="w-4 h-4" />
+          <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           Torneos
         </button>
         <button
           onClick={() => setActiveTab('gestionar')}
-          className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`py-2.5 px-3 rounded-lg text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'gestionar'
               ? 'bg-rose-500 text-rose-950 shadow-md shadow-rose-500/10'
               : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
           }`}
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           Gestionar
         </button>
       </div>

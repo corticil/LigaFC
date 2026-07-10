@@ -25,8 +25,8 @@ export default function MatchStatsModal({ match, stats, onClose }) {
             <BarChart3 className="w-4 h-4 text-emerald-400" />
             Estadísticas del Partido
           </h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="p-2.5 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -38,9 +38,9 @@ export default function MatchStatsModal({ match, stats, onClose }) {
                 <p className="text-sm font-bold text-white">{team1?.name || 'Local'}</p>
               </div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-black text-emerald-400">{match.goles_1}</span>
+                <span className="text-2xl sm:text-3xl font-black text-emerald-400">{match.goles_1}</span>
                 <span className="text-base text-zinc-600 font-bold">-</span>
-                <span className="text-3xl font-black text-indigo-400">{match.goles_2}</span>
+                <span className="text-2xl sm:text-3xl font-black text-indigo-400">{match.goles_2}</span>
               </div>
               <div className="flex-1 text-left">
                 <p className="text-xs text-zinc-500">{match.jugador_2}</p>

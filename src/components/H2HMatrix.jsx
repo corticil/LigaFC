@@ -151,8 +151,8 @@ export default function H2HMatrix({ matches }) {
                   const isNegative = stats.l > stats.w;
                   
                   return (
-                    <td key={`cell-${rowPlayer}-${colPlayer}`} className="p-1 sm:p-3 text-center font-mono">
-                      <span className={`px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-[9px] sm:text-xs tracking-tight sm:tracking-wider ${
+                    <td key={`cell-${rowPlayer}-${colPlayer}`} className="p-1.5 sm:p-3 text-center font-mono">
+                      <span className={`px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs tracking-tight sm:tracking-wider ${
                         isPositive ? 'bg-emerald-500/10 text-emerald-400 font-bold' : 
                         isNegative ? 'bg-rose-500/10 text-rose-400 font-medium' : 
                         'bg-zinc-800/50 text-zinc-400'
