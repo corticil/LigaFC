@@ -265,12 +265,64 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
   };
 
   // ─── Cliente Mock unificado ───────────────────────────────────────────────
+  let authListeners = [];
+  let currentSession = null;
+
+  const getStoredSession = () => {
+    try { return JSON.parse(localStorage.getItem('ligafc_session')); }
+    catch { return null; }
+  };
+
+  const storeSession = (session) => {
+    if (session) localStorage.setItem('ligafc_session', JSON.stringify(session));
+    else localStorage.removeItem('ligafc_session');
+  };
+
   supabase = {
     from: (tableName) => {
       if (tableName === 'partidos') return mockPartidos();
       if (tableName === 'torneos')  return mockTorneos();
       if (tableName === 'partidos_stats') return mockPartidosStats();
       throw new Error(`La tabla "${tableName}" no está mockeada.`);
+    },
+    auth: {
+      signInWithPassword: async ({ email, password }) => {
+        const stored = getStoredSession();
+        if (stored && stored.user.email === email) {
+          currentSession = stored;
+          authListeners.forEach(cb => cb('SIGNED_IN', currentSession));
+          return { data: { session: currentSession }, error: null };
+        }
+        const session = {
+          user: { id: 'mock-user-1', email },
+          access_token: 'mock-token',
+        };
+        storeSession(session);
+        currentSession = session;
+        authListeners.forEach(cb => cb('SIGNED_IN', currentSession));
+        return { data: { session: currentSession }, error: null };
+      },
+      getSession: async () => {
+        const session = getStoredSession();
+        currentSession = session;
+        return { data: { session }, error: null };
+      },
+      signOut: async () => {
+        storeSession(null);
+        currentSession = null;
+        authListeners.forEach(cb => cb('SIGNED_OUT', null));
+        return { error: null };
+      },
+      onAuthStateChange: (callback) => {
+        authListeners.push(callback);
+        const session = getStoredSession();
+        if (session) callback('INITIAL_SESSION', session);
+        return {
+          data: { subscription: { unsubscribe: () => {
+            authListeners = authListeners.filter(cb => cb !== callback);
+          }}}
+        };
+      }
     }
   };
 }

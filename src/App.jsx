@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useMatches } from './hooks/useMatches';
 import { useTournaments } from './hooks/useTournaments';
 import Login from './components/Login';
 import PublicView from './pages/PublicView';
 import AdminView from './pages/AdminView';
-import { isLocalStorageMock } from './config/supabaseClient';
+import { supabase, isLocalStorageMock } from './config/supabaseClient';
 import { Database, Code, ChevronDown, ChevronUp, LogOut } from 'lucide-react';
 
 export default function App() {
@@ -31,10 +31,22 @@ export default function App() {
     deleteTournament
   } = useTournaments(matches);
 
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('ligafc_authenticated') === 'true';
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [showDbInstructions, setShowDbInstructions] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-emerald-500/30 selection:text-white">
@@ -74,10 +86,7 @@ export default function App() {
             {/* Botón de Cerrar Sesión */}
             {isAuthenticated && (
               <button
-                onClick={() => {
-                  localStorage.removeItem('ligafc_authenticated');
-                  setIsAuthenticated(false);
-                }}
+                onClick={() => supabase.auth.signOut()}
                 className="flex items-center gap-1.5 text-[11px] bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-650 border border-zinc-700 text-zinc-350 font-bold px-3 py-1.5 rounded-lg transition"
                 title="Cerrar sesión"
               >

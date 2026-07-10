@@ -1,28 +1,35 @@
 import { useState } from 'react';
 import { Lock, Unlock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { supabase } from '../config/supabaseClient';
 
 export default function Login({ onAuthenticate }) {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
   const [shake, setShake] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(false);
+    setError('');
+    setLoading(true);
 
-    // Obtener la contraseña de la variable de entorno, con fallback a 'ligafc'
-    const correctPassword = import.meta.env.VITE_APP_PASSWORD || 'ligafc';
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: password.trim(),
+    });
 
-    if (password.trim() === correctPassword.trim()) {
-      // Éxito
-      localStorage.setItem('ligafc_authenticated', 'true');
-      onAuthenticate(true);
-    } else {
-      // Error con animación de vibración (shake)
-      setError(true);
+    setLoading(false);
+
+    if (authError) {
+      setError(authError.message === 'Invalid login credentials'
+        ? 'Credenciales inválidas. Verificá email y contraseña.'
+        : authError.message);
       setShake(true);
       setTimeout(() => setShake(false), 500);
+    } else {
+      onAuthenticate(true);
     }
   };
 
@@ -57,13 +64,26 @@ export default function Login({ onAuthenticate }) {
             LigaFC <span className="text-xs bg-zinc-800 text-zinc-400 font-semibold px-2 py-0.5 rounded-full border border-zinc-700">Bitácora</span>
           </h1>
           <p className="text-xs text-zinc-500 mt-2">
-            Introduce la contraseña de acceso para entrar al historial y registrar encuentros
+            Iniciá sesión con tu cuenta de administrador para acceder al historial y registrar encuentros
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <label className="block text-xs text-zinc-400 font-medium">Contraseña de la Liga</label>
+            <label className="block text-xs text-zinc-400 font-medium">Email</label>
+            <input
+              type="email"
+              placeholder="admin@ligafc.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-3 px-4 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs text-zinc-400 font-medium">Contraseña</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -72,7 +92,6 @@ export default function Login({ onAuthenticate }) {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-3 pl-4 pr-10 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
                 required
-                autoFocus
               />
               <button
                 type="button"
@@ -87,16 +106,17 @@ export default function Login({ onAuthenticate }) {
           {error && (
             <div className="flex items-center gap-2 p-3 text-xs bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>Contraseña incorrecta. Pídesela al administrador.</span>
+              <span>{error}</span>
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-zinc-950 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/15 hover:shadow-emerald-500/25"
+            disabled={loading}
+            className="w-full bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-950 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/15 hover:shadow-emerald-500/25"
           >
             <Unlock className="w-4 h-4" />
-            Entrar a la Bitácora
+            {loading ? 'Entrando...' : 'Entrar a la Bitácora'}
           </button>
         </form>
       </div>
