@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useMatches } from './hooks/useMatches';
+import { useTournaments } from './hooks/useTournaments';
 import Login from './components/Login';
 import PublicView from './pages/PublicView';
 import AdminView from './pages/AdminView';
@@ -9,6 +10,7 @@ import { Database, Code, ChevronDown, ChevronUp, LogOut } from 'lucide-react';
 
 export default function App() {
   const {
+    matches,
     filteredMatches,
     loading,
     error,
@@ -17,6 +19,17 @@ export default function App() {
     filters,
     stats
   } = useMatches();
+
+  const {
+    tournaments,
+    activeTournamentId,
+    setActiveTournamentId,
+    activeTournament,
+    standings,
+    pendingMatches,
+    addTournament,
+    deleteTournament
+  } = useTournaments(matches);
 
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem('ligafc_authenticated') === 'true';
@@ -148,13 +161,17 @@ VITE_SUPABASE_ANON_KEY=tu_anon_key_de_supabase_aqui`}
           <Route path="/admin" element={
             isAuthenticated ? (
               <AdminView 
-                stats={stats} 
-                filteredMatches={filteredMatches} 
-                filters={filters} 
-                loading={loading} 
-                error={error} 
                 addMatch={addMatch}
-                deleteMatch={deleteMatch}
+                filters={filters}
+                allMatches={matches}
+                tournaments={tournaments}
+                activeTournamentId={activeTournamentId}
+                setActiveTournamentId={setActiveTournamentId}
+                activeTournament={activeTournament}
+                standings={standings}
+                pendingMatches={pendingMatches}
+                addTournament={addTournament}
+                deleteTournament={deleteTournament}
               />
             ) : (
               <Login onAuthenticate={setIsAuthenticated} />

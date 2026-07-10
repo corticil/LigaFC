@@ -1,11 +1,12 @@
-import React from 'react';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatsOverview from '../components/StatsOverview';
 import MatchLog from '../components/MatchLog';
 import H2HMatrix from '../components/H2HMatrix';
+import { useMatchStats } from '../hooks/useMatchStats';
 
 export default function PublicView({ stats, filteredMatches, filters, loading, error }) {
+  const { getStatsForMatch } = useMatchStats();
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       {/* Panel de Estadísticas */}
@@ -35,6 +36,7 @@ export default function PublicView({ stats, filteredMatches, filters, loading, e
           loading={loading}
           error={error}
           readOnly={true}
+          getStatsForMatch={getStatsForMatch}
         />
       </section>
     </div>

@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { teams } from '../data/teams';
 import { PLAYERS } from '../data/players';
 import { PlusCircle, Trophy, User } from 'lucide-react';
 
-export default function MatchForm({ onAddMatch, onSuccess }) {
+export default function MatchForm({ onAddMatch, onSuccess, tournaments = [] }) {
+  const navigate = useNavigate();
   const [jugador1, setJugador1] = useState(PLAYERS[0]);
   const [jugador2, setJugador2] = useState(PLAYERS[1]);
   const [equipo1Id, setEquipo1Id] = useState(teams[0]?.id || '');
@@ -12,6 +14,7 @@ export default function MatchForm({ onAddMatch, onSuccess }) {
   const [goles2, setGoles2] = useState('');
   const [nota, setNota] = useState('');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
+  const [torneoId, setTorneoId] = useState('');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState('');
@@ -52,20 +55,18 @@ export default function MatchForm({ onAddMatch, onSuccess }) {
       goles_1: g1,
       goles_2: g2,
       nota,
-      fecha
+      fecha,
+      torneo_id: torneoId || null,
     });
 
     setIsSubmitting(false);
 
     if (result.success) {
-      // Limpiar campos de goles y nota
       setGoles1('');
       setGoles2('');
       setNota('');
-      // Ejecutar callback para navegar al historial tras el registro exitoso
-      if (onSuccess) {
-        onSuccess();
-      }
+      setTorneoId('');
+      navigate('/');
     } else {
       setValidationError(result.error || 'Ocurrió un error al registrar el partido.');
     }
@@ -236,8 +237,25 @@ export default function MatchForm({ onAddMatch, onSuccess }) {
           </div>
         </div>
 
-        {/* Detalles adicionales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Torneo + Detalles adicionales */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="torneo" className="block text-xs text-zinc-400 mb-1.5 font-medium">
+              Torneo <span className="text-zinc-600">(opcional)</span>
+            </label>
+            <select
+              id="torneo"
+              value={torneoId}
+              onChange={(e) => setTorneoId(e.target.value)}
+              className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition"
+            >
+              <option value="">-- Sin torneo --</option>
+              {tournaments.map(t => (
+                <option key={t.id} value={t.id}>{t.nombre || t.name}</option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label htmlFor="fecha" className="block text-xs text-zinc-400 mb-1.5 font-medium">Fecha del Encuentro</label>
             <input

@@ -1,20 +1,23 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { teams, getTeamById } from '../data/teams';
 import { PLAYERS } from '../data/players';
-import { Calendar, Trash2, Users, Shield, RotateCcw, AlertCircle, Download, Check } from 'lucide-react';
+import { Calendar, Trash2, Users, Shield, RotateCcw, AlertCircle, Download, Check, BarChart3 } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toPng } from 'html-to-image';
+import MatchStatsModal from './MatchStatsModal';
 export default function MatchLog({ 
   filteredMatches, 
   filters, 
   onDeleteMatch,
   loading,
   error,
-  readOnly = false
+  readOnly = false,
+  getStatsForMatch
 }) {
+  const [statsModalMatch, setStatsModalMatch] = useState(null);
   const {
     h2hPlayer1,
     setH2hPlayer1,
@@ -328,6 +331,20 @@ export default function MatchLog({
                     </div>
                   )}
 
+                  {/* Botón Ver Stats */}
+                  {/* Botón "Ver Stats": visible solo si existen estadísticas para este partido */}
+                  {getStatsForMatch?.(match) && (
+                    <div className="mt-2 flex justify-center">
+                      <button
+                        onClick={() => setStatsModalMatch(match)}
+                        className="text-[10px] font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-lg border border-emerald-500/20 transition flex items-center gap-1.5"
+                      >
+                        <BarChart3 className="w-3 h-3" />
+                        Ver Stats
+                      </button>
+                    </div>
+                  )}
+
                   {/* Botón de eliminar (visible al hacer hover) */}
                   {!readOnly && (
                     <button
@@ -348,6 +365,14 @@ export default function MatchLog({
           </div>
         )}
       </div>
+
+      {statsModalMatch && (
+        <MatchStatsModal
+          match={statsModalMatch}
+          stats={getStatsForMatch?.(statsModalMatch)}
+          onClose={() => setStatsModalMatch(null)}
+        />
+      )}
     </div>
   );
 }

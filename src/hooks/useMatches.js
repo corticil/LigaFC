@@ -54,7 +54,8 @@ export function useMatches() {
             goles_1: parseInt(matchData.goles_1, 10),
             goles_2: parseInt(matchData.goles_2, 10),
             nota: matchData.nota ? matchData.nota.trim() : '',
-            fecha: matchData.fecha || new Date().toISOString().split('T')[0]
+            fecha: matchData.fecha || new Date().toISOString().split('T')[0],
+            torneo_id: matchData.torneo_id || null,
           }
         ])
         .select();
@@ -65,10 +66,9 @@ export function useMatches() {
       if (data && data[0]) {
         setMatches(prev => [data[0], ...prev]);
       } else {
-        // En caso de que no devuelva datos, recargar
         await fetchMatches();
       }
-      return { success: true };
+      return { success: true, data: data?.[0] };
     } catch (err) {
       console.error('Error al registrar el partido:', err);
       setError(err.message || 'Error al registrar el partido');
