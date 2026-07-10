@@ -162,7 +162,9 @@ VITE_SUPABASE_ANON_KEY=tu_anon_key_de_supabase_aqui`}
             isAuthenticated ? (
               <AdminView 
                 addMatch={addMatch}
+                deleteMatch={deleteMatch}
                 filters={filters}
+                filteredMatches={filteredMatches}
                 allMatches={matches}
                 tournaments={tournaments}
                 activeTournamentId={activeTournamentId}

@@ -31,49 +31,66 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
     const get = () => getLocalData(KEY);
     const save = (d) => saveLocalData(KEY, d);
 
-    return {
-      select: (columns = '*') => {
-        const execute = () => ({ data: get(), error: null });
-        const order = (column, { ascending = true } = {}) => {
-          const subOrder = (col2, options2 = {}) => {
-            const { data } = execute();
-            const sorted = [...data].sort((a, b) => {
-              const valA = a[column] || '', valB = b[column] || '';
-              if (valA < valB) return ascending ? -1 : 1;
-              if (valA > valB) return ascending ? 1 : -1;
-              if (col2) {
-                const valA2 = a[col2] || '', valB2 = b[col2] || '';
-                const asc2 = options2.ascending !== false;
-                if (valA2 < valB2) return asc2 ? -1 : 1;
-                if (valA2 > valB2) return asc2 ? 1 : -1;
+    const buildChain = (filters = {}) => {
+      const chain = {
+        _filters: [...(filters._filters || [])],
+        _orders: [...(filters._orders || [])],
+        is(field, value) {
+          const newFilters = { _filters: [...this._filters, { field, type: 'is_null', value }], _orders: this._orders };
+          return buildChain(newFilters);
+        },
+        order(column, opts = {}) {
+          const newOrders = [...this._orders, { column, ascending: opts.ascending !== false }];
+          const newFilters = { _filters: this._filters, _orders: newOrders };
+          return buildChain(newFilters);
+        },
+        update(updates) {
+          const data = get();
+          const updated = data.map(item => {
+            const matches = this._filters.every(f => {
+              if (f.type === 'eq') return item[f.field] === f.value;
+              return true;
+            });
+            return matches ? { ...item, ...updates } : item;
+          });
+          save(updated);
+          return Promise.resolve({ data: null, error: null });
+        },
+        then(fn) {
+          let data = get();
+          this._filters.forEach(f => {
+            if (f.type === 'is_null') data = data.filter(item => item[f.field] === null || item[f.field] === undefined);
+            if (f.type === 'eq') data = data.filter(item => item[f.field] === f.value);
+          });
+          if (this._orders.length > 0) {
+            data = [...data].sort((a, b) => {
+              for (const o of this._orders) {
+                const valA = a[o.column] || '', valB = b[o.column] || '';
+                if (valA < valB) return o.ascending ? -1 : 1;
+                if (valA > valB) return o.ascending ? 1 : -1;
               }
               return 0;
             });
-            return Promise.resolve({ data: sorted, error: null });
-          };
-          return {
-            order: subOrder,
-            then: (fn) => {
-              const { data } = execute();
-              const sorted = [...data].sort((a, b) => {
-                const valA = a[column] || '', valB = b[column] || '';
-                if (valA < valB) return ascending ? -1 : 1;
-                if (valA > valB) return ascending ? 1 : -1;
-                return 0;
-              });
-              return Promise.resolve({ data: sorted, error: null }).then(fn);
-            }
-          };
-        };
-        return { order, then: (fn) => Promise.resolve(execute()).then(fn) };
-      },
+          }
+          return Promise.resolve({ data, error: null }).then(fn);
+        },
+        eq(field, value) {
+          const newFilters = { _filters: [...this._filters, { field, type: 'eq', value }], _orders: this._orders };
+          return buildChain(newFilters);
+        }
+      };
+      return chain;
+    };
 
+    return {
+      select: () => buildChain(),
       insert: (rows) => {
         const data = get();
         const newRows = rows.map(row => ({
           id: Math.random().toString(36).substring(2, 11),
           created_at: new Date().toISOString(),
           torneo_id: null,
+          eliminado_en: null,
           ...row
         }));
         save([...newRows, ...data]);
@@ -82,7 +99,6 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
           then: (fn) => Promise.resolve({ data: newRows, error: null }).then(fn)
         };
       },
-
       delete: () => ({
         eq: (field, value) => {
           if (field === 'id') {
@@ -102,7 +118,7 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
     const save = (d) => saveLocalData(KEY, d);
 
     return {
-      select: (columns = '*') => {
+      select: () => {
         const order = (column, { ascending = true } = {}) => {
           const data = get();
           const sorted = [...data].sort((a, b) => {
@@ -146,38 +162,88 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
   };
 
   // ─── Tabla "partidos_stats" ────────────────────────────────────────────────
-  // Mock para pruebas locales en localStorage
-  // Almacena partido + estadísticas generales + stats por jugador en JSONB
   const mockPartidosStats = () => {
     const KEY = 'ligafc_partidos_stats';
     const get = () => getLocalData(KEY);
     const save = (d) => saveLocalData(KEY, d);
 
-    return {
-      // select: devuelve todos los registros, con soporte para .order()
-      select: (columns = '*') => {
-        const order = (column, { ascending = true } = {}) => {
+    const buildChain = (filters = {}) => {
+      const chain = {
+        _filters: [...(filters._filters || [])],
+        _orders: [...(filters._orders || [])],
+        is(field, value) {
+          return buildChain({ _filters: [...this._filters, { field, type: 'is_null', value }], _orders: this._orders });
+        },
+        eq(field, value) {
+          return buildChain({ _filters: [...this._filters, { field, type: 'eq', value }], _orders: this._orders });
+        },
+        order(column, opts = {}) {
+          return buildChain({ _filters: this._filters, _orders: [...this._orders, { column, ascending: opts.ascending !== false }] });
+        },
+        update(updates) {
           const data = get();
-          const sorted = [...data].sort((a, b) => {
-            const valA = a[column] || '', valB = b[column] || '';
-            if (valA < valB) return ascending ? -1 : 1;
-            if (valA > valB) return ascending ? 1 : -1;
-            return 0;
+          const updated = data.map(item => {
+            const matches = this._filters.every(f => {
+              if (f.type === 'eq') return item[f.field] === f.value;
+              if (f.type === 'is_null') return item[f.field] === null || item[f.field] === undefined;
+              return true;
+            });
+            return matches ? { ...item, ...updates } : item;
           });
-          return Promise.resolve({ data: sorted, error: null });
-        };
-        return {
-          order,
-          then: (fn) => Promise.resolve({ data: get(), error: null }).then(fn)
-        };
-      },
+          save(updated);
+          return Promise.resolve({ data: null, error: null });
+        },
+        select() {
+          let data = get();
+          this._filters.forEach(f => {
+            if (f.type === 'is_null') data = data.filter(item => item[f.field] === null || item[f.field] === undefined);
+            if (f.type === 'eq') data = data.filter(item => item[f.field] === f.value);
+          });
+          if (this._orders.length > 0) {
+            data = [...data].sort((a, b) => {
+              const col = this._orders[0].column;
+              const asc = this._orders[0].ascending;
+              const valA = a[col] || '', valB = b[col] || '';
+              if (valA < valB) return asc ? -1 : 1;
+              if (valA > valB) return asc ? 1 : -1;
+              return 0;
+            });
+          }
+          return Promise.resolve({ data, error: null });
+        },
+        single() {
+          return this.select().then(({ data, error }) => ({ data: data[0] || null, error }));
+        },
+        then(fn) {
+          let data = get();
+          this._filters.forEach(f => {
+            if (f.type === 'is_null') data = data.filter(item => item[f.field] === null || item[f.field] === undefined);
+            if (f.type === 'eq') data = data.filter(item => item[f.field] === f.value);
+          });
+          if (this._orders.length > 0) {
+            data = [...data].sort((a, b) => {
+              const col = this._orders[0].column;
+              const asc = this._orders[0].ascending;
+              const valA = a[col] || '', valB = b[col] || '';
+              if (valA < valB) return asc ? -1 : 1;
+              if (valA > valB) return asc ? 1 : -1;
+              return 0;
+            });
+          }
+          return Promise.resolve({ data, error: null }).then(fn);
+        }
+      };
+      return chain;
+    };
 
-      // insert: agrega nuevos registros con ID y fecha automáticos
+    return {
+      select: () => buildChain(),
       insert: (rows) => {
         const data = get();
         const newRows = rows.map(row => ({
           id: Math.random().toString(36).substring(2, 11),
           creado_en: new Date().toISOString(),
+          eliminado_en: null,
           ...row
         }));
         save([...newRows, ...data]);
@@ -186,8 +252,6 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
           then: (fn) => Promise.resolve({ data: newRows, error: null }).then(fn)
         };
       },
-
-      // delete: elimina un registro por ID (.eq('id', valor))
       delete: () => ({
         eq: (field, value) => {
           if (field === 'id') {

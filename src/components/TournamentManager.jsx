@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Trophy, Plus, Trash2, Calendar, Crown, Medal, Swords, CheckCircle } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Trophy, Plus, Trash2, Calendar, Crown, Medal, Swords, CheckCircle, ChevronRight } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import { es } from 'date-fns/locale';
 import { format, parse } from 'date-fns';
@@ -14,14 +14,15 @@ export default function TournamentManager({
   standings, 
   pendingMatches,
   addTournament, 
-  deleteTournament 
+  deleteTournament,
+  allMatches = []
 }) {
   const [showForm, setShowForm] = useState(false);
   const [newTournament, setNewTournament] = useState({ name: '', startDate: '', endDate: '' });
   
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
-  const tableRef = React.useRef(null);
+  const tableRef = useRef(null);
 
   const handleCreate = (e) => {
     e.preventDefault();
@@ -66,7 +67,7 @@ export default function TournamentManager({
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Encabezado y Selector */}
+      {/* Encabezado */}
       <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-md">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -79,30 +80,68 @@ export default function TournamentManager({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {tournaments.length > 0 && (
-              <select
-                value={activeTournamentId || ''}
-                onChange={(e) => setActiveTournamentId(e.target.value)}
-                className="bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-yellow-500 transition max-w-[150px] sm:max-w-[200px] truncate"
-              >
-                <option value="" disabled>Seleccionar torneo</option>
-                {tournaments.map(t => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
-            )}
-            
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="flex items-center gap-1.5 bg-yellow-500 hover:bg-yellow-400 text-yellow-950 px-3 py-2 rounded-lg font-bold transition text-xs whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4" />
-              Nuevo Torneo
-            </button>
-          </div>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-1.5 bg-yellow-500 hover:bg-yellow-400 text-yellow-950 px-3 py-2 rounded-lg font-bold transition text-xs whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo Torneo
+          </button>
         </div>
       </div>
+
+      {/* Lista de Torneos */}
+      {tournaments.length > 0 && !showForm && (
+        <div className="space-y-2">
+          {tournaments.map(t => {
+            const isActive = t.id === activeTournamentId;
+            const matchCount = allMatches?.filter(m => m.torneo_id === t.id).length || 0;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActiveTournamentId(isActive ? null : t.id)}
+                className={`w-full text-left bg-zinc-900 border rounded-xl p-4 transition-all duration-200 group ${
+                  isActive
+                    ? 'border-yellow-500/40 bg-yellow-500/5 shadow-lg shadow-yellow-500/5'
+                    : 'border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/80'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`p-2 rounded-lg flex-shrink-0 ${
+                      isActive ? 'bg-yellow-500/20 text-yellow-400' : 'bg-zinc-800 text-zinc-500 group-hover:text-zinc-400'
+                    }`}>
+                      <Trophy className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-bold truncate ${isActive ? 'text-yellow-400' : 'text-white'}`}>
+                        {t.nombre || t.name}
+                      </p>
+                      <div className="flex items-center gap-2 text-[10px] text-zinc-500 mt-0.5">
+                        <Calendar className="w-2.5 h-2.5" />
+                        <span>{t.fecha_inicio || t.startDate || 'Sin fecha'} — {t.fecha_fin || t.endDate || 'Sin fecha'}</span>
+                        <span>·</span>
+                        <span>{matchCount} partido{matchCount !== 1 ? 's' : ''}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 flex-shrink-0 transition-transform ${
+                    isActive ? 'text-yellow-400 rotate-90' : 'text-zinc-600 group-hover:text-zinc-400'
+                  }`} />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {tournaments.length === 0 && !showForm && (
+        <div className="bg-zinc-900/40 border border-zinc-800 border-dashed rounded-2xl p-12 text-center">
+          <Trophy className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
+          <p className="text-sm text-zinc-400 font-medium">No hay torneos creados</p>
+          <p className="text-xs text-zinc-600 mt-1">Creá uno nuevo para empezar a seguir una mini-liga.</p>
+        </div>
+      )}
 
       {/* Formulario de Creación */}
       {showForm && (

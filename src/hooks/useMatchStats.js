@@ -21,7 +21,8 @@ export function useMatchStats() {
       try {
         const { data, error } = await supabase
           .from('partidos_stats')
-          .select('*');
+          .select('*')
+          .is('eliminado_en', null);
         if (error) throw error;
         setAllStats(data || []);
       } catch (err) {

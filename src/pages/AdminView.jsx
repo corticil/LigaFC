@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
-import { PlusCircle, Trophy, Sparkles, ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
+import { PlusCircle, Trophy, Sparkles, ArrowLeft, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MatchForm from '../components/MatchForm';
 import TournamentManager from '../components/TournamentManager';
 import StatsUploader from '../components/StatsUploader';
+import MatchLog from '../components/MatchLog';
+import { useMatchStats } from '../hooks/useMatchStats';
 
 export default function AdminView({ 
   addMatch,
+  deleteMatch,
   filters,
+  filteredMatches,
   allMatches,
   tournaments,
   activeTournamentId,
@@ -19,6 +23,7 @@ export default function AdminView({
   deleteTournament,
 }) {
   const [activeTab, setActiveTab] = useState('registrar');
+  const { getStatsForMatch } = useMatchStats();
 
   return (
     <div className="space-y-8">
@@ -63,6 +68,17 @@ export default function AdminView({
           <Trophy className="w-4 h-4" />
           Torneos
         </button>
+        <button
+          onClick={() => setActiveTab('gestionar')}
+          className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            activeTab === 'gestionar'
+              ? 'bg-rose-500 text-rose-950 shadow-md shadow-rose-500/10'
+              : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
+          }`}
+        >
+          <Trash2 className="w-4 h-4" />
+          Gestionar
+        </button>
       </div>
 
       {/* Contenido según la pestaña activa */}
@@ -102,7 +118,30 @@ export default function AdminView({
             pendingMatches={pendingMatches}
             addTournament={addTournament}
             deleteTournament={deleteTournament}
+            allMatches={allMatches}
           />
+        )}
+        {activeTab === 'gestionar' && (
+          <section className="max-w-2xl mx-auto py-4">
+            <div className="text-center mb-6">
+              <h2 className="text-lg font-bold text-white flex items-center justify-center gap-2">
+                <Trash2 className="w-5 h-5 text-rose-400" />
+                Gestionar Partidos
+              </h2>
+              <p className="text-xs text-zinc-500 mt-1">
+                Elimina partidos y estadísticas. Se pueden restaurar desde la base de datos.
+              </p>
+            </div>
+            <MatchLog
+              filteredMatches={filteredMatches}
+              filters={filters}
+              onDeleteMatch={deleteMatch}
+              loading={false}
+              error={null}
+              readOnly={false}
+              getStatsForMatch={getStatsForMatch}
+            />
+          </section>
         )}
       </div>
     </div>

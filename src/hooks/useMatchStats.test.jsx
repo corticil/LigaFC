@@ -42,7 +42,9 @@ describe('useMatchStats', () => {
 
   it('loads stats on mount', async () => {
     vi.spyOn(supabase, 'from').mockReturnValue({
-      select: () => Promise.resolve({ data: mockStatsFromDB, error: null }),
+      select: () => ({
+        is: () => Promise.resolve({ data: mockStatsFromDB, error: null }),
+      }),
     });
 
     const { result } = renderHook(() => useMatchStats());
@@ -52,7 +54,9 @@ describe('useMatchStats', () => {
 
   it('getStatsForMatch finds stats by partido_id', async () => {
     vi.spyOn(supabase, 'from').mockReturnValue({
-      select: () => Promise.resolve({ data: mockStatsFromDB, error: null }),
+      select: () => ({
+        is: () => Promise.resolve({ data: mockStatsFromDB, error: null }),
+      }),
     });
 
     const { result } = renderHook(() => useMatchStats());
@@ -66,7 +70,9 @@ describe('useMatchStats', () => {
 
   it('getStatsForMatch falls back to team name + score match', async () => {
     vi.spyOn(supabase, 'from').mockReturnValue({
-      select: () => Promise.resolve({ data: mockStatsFromDB, error: null }),
+      select: () => ({
+        is: () => Promise.resolve({ data: mockStatsFromDB, error: null }),
+      }),
     });
 
     const { result } = renderHook(() => useMatchStats());
@@ -81,7 +87,9 @@ describe('useMatchStats', () => {
 
   it('getStatsForMatch returns null when no match found', async () => {
     vi.spyOn(supabase, 'from').mockReturnValue({
-      select: () => Promise.resolve({ data: [], error: null }),
+      select: () => ({
+        is: () => Promise.resolve({ data: [], error: null }),
+      }),
     });
 
     const { result } = renderHook(() => useMatchStats());

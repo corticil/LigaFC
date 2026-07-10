@@ -22,6 +22,7 @@ export function useMatches() {
       const { data, error: fetchError } = await supabase
         .from('partidos')
         .select('*')
+        .is('eliminado_en', null)
         .order('fecha', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -76,16 +77,24 @@ export function useMatches() {
     }
   };
 
-  // Eliminar un partido
+  // Eliminar un partido (soft delete: marca eliminado_en)
   const deleteMatch = async (id) => {
     try {
       setError(null);
-      const { error: deleteError } = await supabase
+      const now = new Date().toISOString();
+
+      const { error: updateError } = await supabase
         .from('partidos')
-        .delete()
+        .update({ eliminado_en: now })
         .eq('id', id);
 
-      if (deleteError) throw deleteError;
+      if (updateError) throw updateError;
+
+      // También soft-delete las estadísticas del partido
+      await supabase
+        .from('partidos_stats')
+        .update({ eliminado_en: now })
+        .eq('partido_id', id);
 
       // Filtrar del estado local
       setMatches(prev => prev.filter(m => m.id !== id));
