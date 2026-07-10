@@ -11,7 +11,11 @@ export default async function handler(req, res) {
 
   try {
     let parsed;
-    try { parsed = JSON.parse(req.body); } catch { parsed = {}; }
+    if (typeof req.body === 'string') {
+      try { parsed = JSON.parse(req.body); } catch { parsed = {}; }
+    } else {
+      parsed = req.body || {};
+    }
     const model = parsed?.model || 'gemini-2.5-flash';
     const allowedModels = ['gemini-2.5-flash', 'gemini-3.1-flash-lite'];
     const resolvedModel = allowedModels.includes(model) ? model : 'gemini-2.5-flash';
