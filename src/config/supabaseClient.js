@@ -7,7 +7,13 @@ export let supabase;
 export let isLocalStorageMock = false;
 
 if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && supabaseAnonKey !== 'YOUR_SUPABASE_ANON_KEY') {
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
   isLocalStorageMock = false;
   console.log('⚡ Conectado correctamente a la base de datos de Supabase.');
 } else {
