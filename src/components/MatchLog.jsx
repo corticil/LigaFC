@@ -85,7 +85,7 @@ export default function MatchLog({
   return (
     <div className="space-y-6">
       {/* Contenedor de Filtros */}
-      <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-md">
+      <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-md relative z-20">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
@@ -171,7 +171,7 @@ export default function MatchLog({
           </div>
 
           {/* Filtro por Fecha */}
-          <div className="space-y-3">
+          <div className="space-y-3 relative z-30">
             <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Filtro por Fecha</h3>
             <div className="flex items-center gap-2">
               <DatePicker
