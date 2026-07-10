@@ -83,6 +83,11 @@ npm run dev -- --host
 }
 ```
 
+## Despliegue
+
+- **Plataforma**: Vercel
+- **URL**: https://liga-fc.vercel.app
+
 ## Mock local (sin Supabase)
 
 Cuando `VITE_SUPABASE_URL` no está configurada o falla la conexión, el sistema usa localStorage como backend simulado. Las tablas disponibles son:
