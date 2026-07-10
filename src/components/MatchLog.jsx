@@ -108,7 +108,7 @@ export default function MatchLog({
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Filtro Head to Head */}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Filtro Head-to-Head (Cara a Cara)</h3>
@@ -169,50 +169,41 @@ export default function MatchLog({
               </select>
             </div>
           </div>
+
+          {/* Filtro por Fecha */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Filtro por Fecha</h3>
+            <div className="flex items-center gap-2">
+              <DatePicker
+                selected={filterDateFrom ? parse(filterDateFrom, 'yyyy-MM-dd', new Date()) : null}
+                onChange={(date) => setFilterDateFrom(date ? format(date, 'yyyy-MM-dd') : '')}
+                selectsStart
+                startDate={filterDateFrom ? parse(filterDateFrom, 'yyyy-MM-dd', new Date()) : null}
+                endDate={filterDateTo ? parse(filterDateTo, 'yyyy-MM-dd', new Date()) : null}
+                placeholderText="Desde"
+                locale={es}
+                dateFormat="dd/MM/yyyy"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-[7px] px-2 text-[10px] sm:text-xs text-white focus:outline-none focus:border-indigo-500 transition text-center"
+                wrapperClassName="w-full"
+              />
+              <span className="text-xs font-bold text-zinc-600">-</span>
+              <DatePicker
+                selected={filterDateTo ? parse(filterDateTo, 'yyyy-MM-dd', new Date()) : null}
+                onChange={(date) => setFilterDateTo(date ? format(date, 'yyyy-MM-dd') : '')}
+                selectsEnd
+                startDate={filterDateFrom ? parse(filterDateFrom, 'yyyy-MM-dd', new Date()) : null}
+                endDate={filterDateTo ? parse(filterDateTo, 'yyyy-MM-dd', new Date()) : null}
+                minDate={filterDateFrom ? parse(filterDateFrom, 'yyyy-MM-dd', new Date()) : null}
+                placeholderText="Hasta"
+                locale={es}
+                dateFormat="dd/MM/yyyy"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-[7px] px-2 text-[10px] sm:text-xs text-white focus:outline-none focus:border-indigo-500 transition text-center"
+                wrapperClassName="w-full"
+              />
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Filtro por Fecha — barra compacta encima del historial */}
-      {(filterDateFrom || filterDateTo || filteredMatches.length > 0) && (
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5" />
-            Fecha
-          </span>
-          <DatePicker
-            selected={filterDateFrom ? parse(filterDateFrom, 'yyyy-MM-dd', new Date()) : null}
-            onChange={(date) => setFilterDateFrom(date ? format(date, 'yyyy-MM-dd') : '')}
-            selectsStart
-            startDate={filterDateFrom ? parse(filterDateFrom, 'yyyy-MM-dd', new Date()) : null}
-            endDate={filterDateTo ? parse(filterDateTo, 'yyyy-MM-dd', new Date()) : null}
-            placeholderText="Desde"
-            locale={es}
-            dateFormat="dd/MM/yyyy"
-            className="bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 px-2.5 text-[10px] sm:text-xs text-white focus:outline-none focus:border-indigo-500 transition text-center w-[110px]"
-          />
-          <span className="text-xs font-bold text-zinc-600">—</span>
-          <DatePicker
-            selected={filterDateTo ? parse(filterDateTo, 'yyyy-MM-dd', new Date()) : null}
-            onChange={(date) => setFilterDateTo(date ? format(date, 'yyyy-MM-dd') : '')}
-            selectsEnd
-            startDate={filterDateFrom ? parse(filterDateFrom, 'yyyy-MM-dd', new Date()) : null}
-            endDate={filterDateTo ? parse(filterDateTo, 'yyyy-MM-dd', new Date()) : null}
-            minDate={filterDateFrom ? parse(filterDateFrom, 'yyyy-MM-dd', new Date()) : null}
-            placeholderText="Hasta"
-            locale={es}
-            dateFormat="dd/MM/yyyy"
-            className="bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 px-2.5 text-[10px] sm:text-xs text-white focus:outline-none focus:border-indigo-500 transition text-center w-[110px]"
-          />
-          {(filterDateFrom || filterDateTo) && (
-            <button
-              onClick={() => { setFilterDateFrom(''); setFilterDateTo(''); }}
-              className="text-[10px] text-zinc-500 hover:text-white transition"
-            >
-              Limpiar
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Historial de Partidos */}
       <div className="space-y-4" ref={historyRef}>
