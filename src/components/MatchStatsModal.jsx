@@ -18,6 +18,34 @@ export default function MatchStatsModal({ match, stats, onClose, resolveTeam = n
   const statsTable = stats.estadisticas_tabla;
   const rendimiento = stats.rendimiento_general;
 
+  const STATS_ORDER = [
+    'Posesión',
+    'Recuperación de balón',
+    'Tiros',
+    'Goles esperados',
+    'Pases',
+    'Entradas',
+    'Entradas con éxito',
+    'Recuperaciones',
+    'Atajadas',
+    'Faltas cometidas',
+    'Fueras de lugar',
+    'Tiros de esquina',
+    'Tiros libres',
+    'Penales',
+    'Tarjetas amarillas',
+  ];
+
+  const sortedStats = statsTable
+    ? Object.entries(statsTable).sort(([a], [b]) => {
+        const ia = STATS_ORDER.findIndex(s => s.toLowerCase() === a.toLowerCase());
+        const ib = STATS_ORDER.findIndex(s => s.toLowerCase() === b.toLowerCase());
+        const va = ia === -1 ? STATS_ORDER.length : ia;
+        const vb = ib === -1 ? STATS_ORDER.length : ib;
+        return va - vb;
+      })
+    : [];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -60,7 +88,7 @@ export default function MatchStatsModal({ match, stats, onClose, resolveTeam = n
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Estadísticas</span>
               </div>
               <div className="divide-y divide-zinc-800/50">
-                {Object.entries(statsTable).map(([metrica, valores]) => (
+                {sortedStats.map(([metrica, valores]) => (
                   <div key={metrica} className="grid grid-cols-3 gap-3 px-4 py-2.5 items-center hover:bg-zinc-800/20 transition-colors">
                     <div className="text-right"><span className="text-xs font-bold text-emerald-400">{valores.local}</span></div>
                     <div className="text-center"><span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">{metrica}</span></div>
