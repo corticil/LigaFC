@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
-import { teams, getTeamById } from '../data/teams';
-import { PLAYERS } from '../data/players';
+import { teams as defaultTeams, getTeamById as defaultGetTeamById } from '../data/teams';
 import { Calendar, Trash2, Users, Shield, RotateCcw, AlertCircle, Download, Check, BarChart3 } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -15,7 +14,10 @@ export default function MatchLog({
   loading,
   error,
   readOnly = false,
-  getStatsForMatch
+  getStatsForMatch,
+  players = [],
+  teamsList = [],
+  resolveTeam = null,
 }) {
   const [statsModalMatch, setStatsModalMatch] = useState(null);
   const {
@@ -33,6 +35,13 @@ export default function MatchLog({
   } = filters;
 
   const hasActiveFilters = h2hPlayer1 || h2hPlayer2 || filterTeamId || filterDateFrom || filterDateTo;
+
+  const teamLookup = (id) => {
+    if (resolveTeam) return resolveTeam(id);
+    return defaultGetTeamById(id);
+  };
+
+  const teamsForFilter = teamsList.length > 0 ? teamsList : defaultTeams;
 
   // Formatear fecha de forma legible
   const formatDate = (dateStr) => {
@@ -120,7 +129,7 @@ export default function MatchLog({
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
                 >
                   <option value="">-- Jugador 1 --</option>
-                  {PLAYERS.map(player => (
+                  {players.map(player => (
                     <option key={`p1-${player}`} value={player}>
                       {player}
                     </option>
@@ -137,7 +146,7 @@ export default function MatchLog({
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
                 >
                   <option value="">-- Jugador 2 --</option>
-                  {PLAYERS.map(player => (
+                  {players.map(player => (
                     <option 
                       key={`p2-${player}`} 
                       value={player}
@@ -161,11 +170,15 @@ export default function MatchLog({
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
               >
                 <option value="">-- Todos los equipos --</option>
-                {teams.map(team => (
-                  <option key={`filter-${team.id}`} value={team.id}>
-                    {team.name}
-                  </option>
-                ))}
+                {teamsForFilter.map(team => {
+                  const teamId = team.id || team.slug;
+                  const teamName = team.name || team.nombre;
+                  return (
+                    <option key={`filter-${teamId}`} value={teamId}>
+                      {teamName}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>
@@ -245,8 +258,8 @@ export default function MatchLog({
         ) : (
           <div className="space-y-4">
             {filteredMatches.map((match) => {
-              const team1 = getTeamById(match.equipo_1_id);
-              const team2 = getTeamById(match.equipo_2_id);
+              const team1 = teamLookup(match.equipo_1_id);
+              const team2 = teamLookup(match.equipo_2_id);
 
               const winner = match.goles_1 > match.goles_2 ? 1 : match.goles_1 < match.goles_2 ? 2 : 0;
 
@@ -371,6 +384,7 @@ export default function MatchLog({
           match={statsModalMatch}
           stats={getStatsForMatch?.(statsModalMatch)}
           onClose={() => setStatsModalMatch(null)}
+          resolveTeam={teamLookup}
         />
       )}
     </div>

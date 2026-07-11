@@ -1,15 +1,17 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { PLAYERS } from '../data/players';
+import { PLAYERS as defaultPlayers } from '../data/players';
 import { Grid, Download, Check } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
-export default function H2HMatrix({ matches }) {
+export default function H2HMatrix({ matches, players = [] }) {
+  const playerList = players.length > 0 ? players : defaultPlayers;
+
   const matrix = useMemo(() => {
     // Inicializar matriz
     const mat = {};
-    PLAYERS.forEach(p1 => {
+    playerList.forEach(p1 => {
       mat[p1] = {};
-      PLAYERS.forEach(p2 => {
+      playerList.forEach(p2 => {
         mat[p1][p2] = { w: 0, d: 0, l: 0, played: 0 };
       });
     });
@@ -119,16 +121,16 @@ export default function H2HMatrix({ matches }) {
           <thead>
             <tr>
               <th className="bg-zinc-950 p-2 sm:p-3 rounded-tl-xl border-b border-zinc-800 text-zinc-500 font-medium text-[10px] sm:text-sm">Jugador</th>
-              {PLAYERS.map(p => (
+              {playerList.map(p => (
                 <th key={`th-${p}`} className="bg-zinc-950 p-2 sm:p-3 text-center border-b border-zinc-800 text-zinc-400 font-bold text-[10px] sm:text-sm">{p}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {PLAYERS.map((rowPlayer) => (
+            {playerList.map((rowPlayer) => (
               <tr key={`row-${rowPlayer}`} className="border-b border-zinc-800/50 last:border-0 hover:bg-zinc-800/20 transition-colors">
                 <td className="p-2 sm:p-3 font-bold text-zinc-300 bg-zinc-950/50 text-[10px] sm:text-sm">{rowPlayer}</td>
-                {PLAYERS.map(colPlayer => {
+                {playerList.map(colPlayer => {
                   if (rowPlayer === colPlayer) {
                     return (
                       <td key={`cell-${rowPlayer}-${colPlayer}`} className="p-2 sm:p-3 text-center bg-zinc-900/50 text-zinc-600">

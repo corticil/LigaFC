@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { teams } from '../data/teams';
-import { PLAYERS } from '../data/players';
 import { PlusCircle, Trophy, User } from 'lucide-react';
 
-export default function MatchForm({ onAddMatch, onSuccess, tournaments = [] }) {
+export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], players = [], teamsList = [] }) {
   const navigate = useNavigate();
-  const [jugador1, setJugador1] = useState(PLAYERS[0]);
-  const [jugador2, setJugador2] = useState(PLAYERS[1]);
-  const [equipo1Id, setEquipo1Id] = useState(teams[0]?.id || '');
-  const [equipo2Id, setEquipo2Id] = useState(teams[1]?.id || '');
+  const [jugador1, setJugador1] = useState(players[0] || '');
+  const [jugador2, setJugador2] = useState(players[1] || '');
+  const [equipo1Id, setEquipo1Id] = useState(teamsList[0]?.id || '');
+  const [equipo2Id, setEquipo2Id] = useState(teamsList[1]?.id || '');
   const [goles1, setGoles1] = useState('');
   const [goles2, setGoles2] = useState('');
   const [nota, setNota] = useState('');
@@ -20,8 +18,8 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [] }) {
   const [validationError, setValidationError] = useState('');
 
   // Buscar los objetos de equipo seleccionados para mostrar sus logos
-  const selectedTeam1 = teams.find(t => t.id === equipo1Id);
-  const selectedTeam2 = teams.find(t => t.id === equipo2Id);
+  const selectedTeam1 = teamsList.find(t => t.id === equipo1Id);
+  const selectedTeam2 = teamsList.find(t => t.id === equipo2Id);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -110,13 +108,13 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [] }) {
                   const val = e.target.value;
                   setJugador1(val);
                   if (val === jugador2) {
-                    const other = PLAYERS.find(p => p !== val);
+                    const other = players.find(p => p !== val);
                     setJugador2(other);
                   }
                 }}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
               >
-                {PLAYERS.map(player => (
+                {players.map(player => (
                   <option key={`form-p1-${player}`} value={player}>
                     {player}
                   </option>
@@ -132,7 +130,7 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [] }) {
                 onChange={(e) => setEquipo1Id(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
               >
-                {teams.map(team => (
+                {teamsList.map(team => (
                   <option key={team.id} value={team.id}>
                     {team.name}
                   </option>
@@ -191,13 +189,13 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [] }) {
                   const val = e.target.value;
                   setJugador2(val);
                   if (val === jugador1) {
-                    const other = PLAYERS.find(p => p !== val);
+                    const other = players.find(p => p !== val);
                     setJugador1(other);
                   }
                 }}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
               >
-                {PLAYERS.map(player => (
+                {players.map(player => (
                   <option key={`form-p2-${player}`} value={player}>
                     {player}
                   </option>
@@ -213,7 +211,7 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [] }) {
                 onChange={(e) => setEquipo2Id(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
               >
-                {teams.map(team => (
+                {teamsList.map(team => (
                   <option key={team.id} value={team.id}>
                     {team.name}
                   </option>

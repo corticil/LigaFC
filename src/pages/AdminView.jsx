@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { PlusCircle, Trophy, Sparkles, ArrowLeft, Trash2 } from 'lucide-react';
+import { PlusCircle, Trophy, Sparkles, ArrowLeft, Trash2, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MatchForm from '../components/MatchForm';
 import TournamentManager from '../components/TournamentManager';
 import StatsUploader from '../components/StatsUploader';
 import MatchLog from '../components/MatchLog';
+import PlayerManager from '../components/PlayerManager';
+import TeamManager from '../components/TeamManager';
 import { useMatchStats } from '../hooks/useMatchStats';
 
 export default function AdminView({ 
@@ -21,6 +23,13 @@ export default function AdminView({
   pendingMatches,
   addTournament,
   deleteTournament,
+  players,
+  playerNames,
+  onAddPlayer,
+  onDeletePlayer,
+  teamsList,
+  onAddTeam,
+  onDeleteTeam,
 }) {
   const [activeTab, setActiveTab] = useState('registrar');
   const { getStatsForMatch } = useMatchStats();
@@ -79,6 +88,17 @@ export default function AdminView({
           <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           Gestionar
         </button>
+        <button
+          onClick={() => setActiveTab('data')}
+          className={`py-2.5 px-3 rounded-lg text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            activeTab === 'data'
+              ? 'bg-blue-500 text-blue-950 shadow-md shadow-blue-500/10'
+              : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          Gestión
+        </button>
       </div>
 
       {/* Contenido según la pestaña activa */}
@@ -88,6 +108,8 @@ export default function AdminView({
             <MatchForm 
               onAddMatch={addMatch} 
               tournaments={tournaments}
+              players={playerNames}
+              teamsList={teamsList.map(t => ({ id: t.id || t.slug, name: t.nombre, logoUrl: t.logo_url }))}
               onSuccess={() => {
                 filters.clearFilters();
               }} 
@@ -105,7 +127,7 @@ export default function AdminView({
                 Subí una captura de pantalla de estadísticas de FC para extraer y guardar los datos automáticamente
               </p>
             </div>
-            <StatsUploader onAddMatch={addMatch} tournaments={tournaments} />
+            <StatsUploader onAddMatch={addMatch} tournaments={tournaments} players={playerNames} teamsList={teamsList.map(t => ({ id: t.id || t.slug, name: t.nombre, logoUrl: t.logo_url }))} />
           </section>
         )}
         {activeTab === 'torneos' && (
@@ -140,7 +162,35 @@ export default function AdminView({
               error={null}
               readOnly={false}
               getStatsForMatch={getStatsForMatch}
+              players={playerNames}
+              teamsList={teamsList.map(t => ({ id: t.id || t.slug, name: t.nombre, logoUrl: t.logo_url }))}
             />
+          </section>
+        )}
+        {activeTab === 'data' && (
+          <section className="max-w-4xl mx-auto py-4 space-y-6">
+            <div className="text-center mb-6">
+              <h2 className="text-lg font-bold text-white flex items-center justify-center gap-2">
+                <Users className="w-5 h-5 text-blue-400" />
+                Gestión de Jugadores y Clubes
+              </h2>
+              <p className="text-xs text-zinc-500 mt-1">
+                Agregá o eliminá jugadores y clubes. Los cambios se reflejan en todo el sistema.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PlayerManager
+                players={players}
+                playerNames={playerNames}
+                onAddPlayer={onAddPlayer}
+                onDeletePlayer={onDeletePlayer}
+              />
+              <TeamManager
+                teamsList={teamsList}
+                onAddTeam={onAddTeam}
+                onDeleteTeam={onDeleteTeam}
+              />
+            </div>
           </section>
         )}
       </div>

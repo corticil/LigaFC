@@ -1,5 +1,5 @@
 import { BarChart3, User, X } from 'lucide-react';
-import { getTeamById } from '../data/teams';
+import { getTeamById as defaultGetTeamById } from '../data/teams';
 
 /**
  * MatchStatsModal: Modal que muestra las estadísticas detalladas de un partido
@@ -8,11 +8,12 @@ import { getTeamById } from '../data/teams';
  * - Rendimiento por equipo (regates, precisión tiros, precisión pases)
  * - Stats individuales por jugador (si la IA los detectó)
  */
-export default function MatchStatsModal({ match, stats, onClose }) {
+export default function MatchStatsModal({ match, stats, onClose, resolveTeam = null }) {
   if (!match || !stats) return null;
 
-  const team1 = getTeamById(match.equipo_1_id);
-  const team2 = getTeamById(match.equipo_2_id);
+  const teamLookup = resolveTeam || defaultGetTeamById;
+  const team1 = teamLookup(match.equipo_1_id);
+  const team2 = teamLookup(match.equipo_2_id);
 
   const statsTable = stats.estadisticas_tabla;
   const rendimiento = stats.rendimiento_general;

@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Image, Loader2, AlertCircle, BarChart3, FileCheck, X, RotateCcw, User, Camera, Sparkles, Crop } from 'lucide-react';
-import { teams } from '../data/teams';
-import { PLAYERS } from '../data/players';
+import { teams as defaultTeams } from '../data/teams';
+import { PLAYERS as defaultPlayers } from '../data/players';
 import { extractStatsFromImage, extractStatsFromImageOcr, extractStatsFromImageOcrWithZones, saveStatsToSupabase, compressImage, GEMINI_MODELS } from '../services/statsProcessor';
 import ZoneEditor, { loadZones } from './ZoneEditor';
 
@@ -10,11 +10,11 @@ function normalize(str) {
   return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
 }
 
-function findTeam(name) {
+function findTeam(name, teamsRef) {
   const normalized = normalize(name);
-  const exact = teams.find(t => normalize(t.name) === normalized);
+  const exact = teamsRef.find(t => normalize(t.name) === normalized);
   if (exact) return exact;
-  return teams.find(t => normalize(t.name).includes(normalized) || normalized.includes(normalize(t.name)));
+  return teamsRef.find(t => normalize(t.name).includes(normalized) || normalized.includes(normalize(t.name)));
 }
 
 /**
@@ -26,7 +26,7 @@ function findTeam(name) {
  *
  * Estados: idle | loading | error | saving
  */
-export default function StatsUploader({ onAddMatch, tournaments = [] }) {
+export default function StatsUploader({ onAddMatch, tournaments = [], players = defaultPlayers, teamsList = defaultTeams }) {
   const navigate = useNavigate();
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -38,8 +38,8 @@ export default function StatsUploader({ onAddMatch, tournaments = [] }) {
   const inputRef = useRef(null);
   const cameraRef = useRef(null);
 
-  const [jugador1, setJugador1] = useState(PLAYERS[0]);
-  const [jugador2, setJugador2] = useState(PLAYERS[PLAYERS.length - 1]);
+  const [jugador1, setJugador1] = useState(players[0] || '');
+  const [jugador2, setJugador2] = useState(players[players.length - 1] || '');
   const [team1Id, setTeam1Id] = useState('');
   const [team2Id, setTeam2Id] = useState('');
   const [torneoId, setTorneoId] = useState('');
@@ -93,12 +93,12 @@ export default function StatsUploader({ onAddMatch, tournaments = [] }) {
       const hasZones = ocrMode && zones && zones.length > 0;
       const data = ocrMode
         ? hasZones
-          ? await extractStatsFromImageOcrWithZones(image, (pct) => setOcrProgress(pct))
-          : await extractStatsFromImageOcr(image, (pct) => setOcrProgress(pct))
+          ? await extractStatsFromImageOcrWithZones(image, (pct) => setOcrProgress(pct), teamsList)
+          : await extractStatsFromImageOcr(image, (pct) => setOcrProgress(pct), teamsList)
         : await extractStatsFromImage(image, geminiModel);
       setParsedData(data);
-      const matched1 = findTeam(data.nombre_local);
-      const matched2 = findTeam(data.nombre_visitante);
+      const matched1 = findTeam(data.nombre_local, teamsList);
+      const matched2 = findTeam(data.nombre_visitante, teamsList);
       if (matched1) setTeam1Id(matched1.id);
       if (matched2) setTeam2Id(matched2.id);
       setStep('confirm');
@@ -177,7 +177,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [] }) {
           <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-xl p-4 text-center">
             <div className="flex items-center justify-center gap-4">
               <div className="flex-1 text-right">
-                <p className="text-sm font-bold text-white">{teams.find(t => t.id === team1Id)?.name || localName}</p>
+                <p className="text-sm font-bold text-white">{teamsList.find(t => t.id === team1Id)?.name || localName}</p>
               </div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-3xl font-black text-emerald-400">{parsedData.goles_local}</span>
@@ -185,7 +185,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [] }) {
                 <span className="text-3xl font-black text-indigo-400">{parsedData.goles_visitante}</span>
               </div>
               <div className="flex-1 text-left">
-                <p className="text-sm font-bold text-white">{teams.find(t => t.id === team2Id)?.name || visitName}</p>
+                <p className="text-sm font-bold text-white">{teamsList.find(t => t.id === team2Id)?.name || visitName}</p>
               </div>
             </div>
             {parsedData.tiempo_partido && (
@@ -198,14 +198,14 @@ export default function StatsUploader({ onAddMatch, tournaments = [] }) {
               <label className="block text-[10px] text-zinc-500 mb-1.5 font-medium uppercase tracking-wider">Equipo Local</label>
               <select value={team1Id} onChange={e => setTeam1Id(e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
-                {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                {teamsList.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-[10px] text-zinc-500 mb-1.5 font-medium uppercase tracking-wider">Equipo Visitante</label>
               <select value={team2Id} onChange={e => setTeam2Id(e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
-                {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                {teamsList.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
           </div>
@@ -218,10 +218,10 @@ export default function StatsUploader({ onAddMatch, tournaments = [] }) {
               <select value={jugador1} onChange={e => {
                 const val = e.target.value;
                 setJugador1(val);
-                if (val === jugador2) setJugador2(PLAYERS.find(p => p !== val));
+                if (val === jugador2) setJugador2(players.find(p => p !== val));
               }}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
-                {PLAYERS.map(p => <option key={p} value={p}>{p}</option>)}
+                {players.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
             <div>
@@ -231,10 +231,10 @@ export default function StatsUploader({ onAddMatch, tournaments = [] }) {
               <select value={jugador2} onChange={e => {
                 const val = e.target.value;
                 setJugador2(val);
-                if (val === jugador1) setJugador1(PLAYERS.find(p => p !== val));
+                if (val === jugador1) setJugador1(players.find(p => p !== val));
               }}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
-                {PLAYERS.map(p => <option key={p} value={p}>{p}</option>)}
+                {players.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
           </div>

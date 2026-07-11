@@ -5,7 +5,7 @@ import MatchLog from '../components/MatchLog';
 import H2HMatrix from '../components/H2HMatrix';
 import { useMatchStats } from '../hooks/useMatchStats';
 
-export default function PublicView({ stats, filteredMatches, filters, loading, error }) {
+export default function PublicView({ stats, filteredMatches, filters, loading, error, players = [], teamsList = [], getTeamById = null }) {
   const { getStatsForMatch } = useMatchStats();
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
@@ -25,7 +25,7 @@ export default function PublicView({ stats, filteredMatches, filters, loading, e
 
       {/* Matriz de H2H */}
       <section>
-        <H2HMatrix matches={filteredMatches} />
+        <H2HMatrix matches={filteredMatches} players={players} />
       </section>
 
       {/* Historial y Filtros */}
@@ -37,6 +37,9 @@ export default function PublicView({ stats, filteredMatches, filters, loading, e
           error={error}
           readOnly={true}
           getStatsForMatch={getStatsForMatch}
+          players={players}
+          teamsList={teamsList}
+          resolveTeam={getTeamById}
         />
       </section>
     </div>

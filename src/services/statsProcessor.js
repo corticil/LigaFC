@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabaseClient';
 import Tesseract from 'tesseract.js';
-import { teams } from '../data/teams';
+import { teams as defaultTeams } from '../data/teams';
 
 export const GEMINI_MODELS = {
   flash: 'gemini-2.5-flash',
@@ -196,22 +196,23 @@ function normalize(str) {
   return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
 }
 
-function findTeam(rawName) {
+function findTeam(rawName, teamsRef) {
   const normalized = normalize(rawName);
-  const exact = teams.find(t => normalize(t.name) === normalized);
+  const exact = teamsRef.find(t => normalize(t.name) === normalized);
   if (exact) return exact;
-  return teams.find(t => normalize(t.name).includes(normalized) || normalized.includes(normalize(t.name)));
+  return teamsRef.find(t => normalize(t.name).includes(normalized) || normalized.includes(normalize(t.name)));
 }
 
 /**
  * Limpia un nombre de equipo extraído por OCR usando fuzzy matching contra teams conocidos
  * @param {string} rawName - Nombre crudo desde OCR
+ * @param {Array} [teamsRef] - Lista de equipos conocidos (fallback a hardcoded)
  * @returns {string} Nombre limpio o el original si no hay match
  */
-function cleanTeamName(rawName) {
+function cleanTeamName(rawName, teamsRef) {
   const cleaned = rawName.replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑ\s]/g, '').trim();
   if (cleaned.length < 3) return rawName;
-  const matched = findTeam(cleaned);
+  const matched = findTeam(cleaned, teamsRef);
   if (matched) return matched.name;
 
   // Fallback: extraer la parte más larga que coincida con algún equipo
@@ -219,7 +220,7 @@ function cleanTeamName(rawName) {
   for (let len = words.length; len > 1; len--) {
     for (let start = 0; start <= words.length - len; start++) {
       const sub = words.slice(start, start + len).join(' ');
-      const m = findTeam(sub);
+      const m = findTeam(sub, teamsRef);
       if (m) return m.name;
     }
   }
@@ -266,7 +267,8 @@ const STAT_PATTERNS = [
  * @param {string} text - Texto extraído por OCR
  * @returns {Object} Datos normalizados del partido
  */
-export function parseOcrText(text) {
+export function parseOcrText(text, teamsRef) {
+  const teamsToUse = teamsRef && teamsRef.length > 0 ? teamsRef : defaultTeams;
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const result = {
     nombre_local: '',
@@ -296,7 +298,7 @@ export function parseOcrText(text) {
         if (raw.length < 3) return '';
         // Si es muy corto o coincide con un patrón de stat, rechazar
         if (raw.length < 6 || /posesi[oó]n|tiros|pases?|goles|entradas?|faltas|atajadas?|penales?|tarjetas?|recuperaci[oó]n|precisi[oó]n|tasa|esquina|libre|rendimiento|exito|regates?/i.test(raw)) return '';
-        return cleanTeamName(raw);
+        return cleanTeamName(raw, teamsToUse);
       };
 
       if (i > 0 && !result.nombre_local) {
@@ -429,8 +431,8 @@ export function parseOcrText(text) {
     const alphaLines = lines
       .map(l => l.replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑ\s]/g, '').trim())
       .filter(l => l.length > 5 && !/posesi[oó]n|tiros|goles|entradas?|atajadas?|penales?|tarjetas?|recuperaci[oó]n|precisi[oó]n|tasa|esquina|pases?/i.test(l));
-    if (!result.nombre_local) result.nombre_local = cleanTeamName(alphaLines[0] || '');
-    if (!result.nombre_visitante) result.nombre_visitante = cleanTeamName(alphaLines[1] || '');
+    if (!result.nombre_local) result.nombre_local = cleanTeamName(alphaLines[0] || '', teamsToUse);
+    if (!result.nombre_visitante) result.nombre_visitante = cleanTeamName(alphaLines[1] || '', teamsToUse);
   }
 
   // ── 5. Extraer rendimiento_general ──
@@ -583,7 +585,7 @@ function preprocessImageForOcr(imageBlob) {
  * @param {Function} [onProgress] - Callback de progreso (pct: number) => void
  * @returns {Promise<Object>} Datos normalizados del partido
  */
-export async function extractStatsFromImageOcr(imageFile, onProgress) {
+export async function extractStatsFromImageOcr(imageFile, onProgress, teamsRef) {
   const processed = await preprocessImageForOcr(imageFile);
 
   // Debug: mostrar la imagen pre-procesada como data URL (copiar y pegar en el navegador)
@@ -605,7 +607,7 @@ export async function extractStatsFromImageOcr(imageFile, onProgress) {
     },
   });
 
-  const parsed = parseOcrText(data.text);
+  const parsed = parseOcrText(data.text, teamsRef);
   console.log('%c[Tesseract OCR] Texto extraído:', 'background:#222;color:#ffd700;font-weight:bold', data.text);
   console.log('%c[Tesseract OCR] Datos parseados:', 'background:#222;color:#4ade80;font-weight:bold', parsed);
   return parsed;
@@ -685,11 +687,11 @@ function cropCanvasRegion(srcCanvas, pctX, pctY, pctW, pctH) {
  * @param {Function} [onProgress] - Callback de progreso (pct: number) => void
  * @returns {Promise<Object>} Datos normalizados del partido
  */
-export async function extractStatsFromImageOcrWithZones(imageFile, onProgress) {
+export async function extractStatsFromImageOcrWithZones(imageFile, onProgress, teamsRef) {
   const zones = loadOcrZones();
   if (!zones || zones.length === 0) {
     console.log('%c[OCR Zonas] No hay zonas configuradas, usando OCR normal...', 'background:#222;color:#f59e0b;font-weight:bold');
-    return extractStatsFromImageOcr(imageFile, onProgress);
+    return extractStatsFromImageOcr(imageFile, onProgress, teamsRef);
   }
 
   console.log(`%c[OCR Zonas] Usando ${zones.length} zona(s) persistida(s)`, 'background:#222;color:#60a5fa;font-weight:bold', zones);
@@ -729,7 +731,7 @@ export async function extractStatsFromImageOcrWithZones(imageFile, onProgress) {
 
   if (onProgress) onProgress(100);
 
-  const parsed = parseOcrText(allText);
+  const parsed = parseOcrText(allText, teamsRef);
   console.log('%c[OCR Zonas] Texto combinado:', 'background:#222;color:#ffd700;font-weight:bold', allText);
   console.log('%c[OCR Zonas] Datos parseados:', 'background:#222;color:#4ade80;font-weight:bold', parsed);
   return parsed;

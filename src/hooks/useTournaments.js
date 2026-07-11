@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../config/supabaseClient';
-import { PLAYERS } from '../data/players';
+import { PLAYERS as defaultPlayers } from '../data/players';
 
 function getAllMatchups(players) {
   const matchups = [];
@@ -12,7 +12,8 @@ function getAllMatchups(players) {
   return matchups;
 }
 
-export function useTournaments(allMatches) {
+export function useTournaments(allMatches, playersParam = []) {
+  const playerNames = playersParam.length > 0 ? playersParam : defaultPlayers;
   const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTournamentId, setActiveTournamentId] = useState(() => {
@@ -59,7 +60,7 @@ export function useTournaments(allMatches) {
     const tMatches = allMatches.filter(m => m.torneo_id === activeTournament.id);
 
     const playerStats = {};
-    PLAYERS.forEach(p => {
+    playerNames.forEach(p => {
       playerStats[p] = { player: p, pld: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0 };
     });
 
@@ -106,7 +107,7 @@ export function useTournaments(allMatches) {
     if (!activeTournament || !allMatches) return [];
 
     const tMatches = allMatches.filter(m => m.torneo_id === activeTournament.id);
-    const allMatchups = getAllMatchups(PLAYERS);
+    const allMatchups = getAllMatchups(playerNames);
 
     return allMatchups.filter(matchup => {
       return !tMatches.some(m => {

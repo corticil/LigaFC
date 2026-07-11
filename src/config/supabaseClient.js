@@ -167,6 +167,102 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
     };
   };
 
+  // ─── Tabla "jugadores" ────────────────────────────────────────────────────
+  const mockJugadores = () => {
+    const KEY = 'ligafc_jugadores';
+    const get = () => getLocalData(KEY);
+    const save = (d) => saveLocalData(KEY, d);
+
+    return {
+      select: () => {
+        const order = (column, { ascending = true } = {}) => {
+          const data = get();
+          const sorted = [...data].sort((a, b) => {
+            const valA = a[column] || '', valB = b[column] || '';
+            if (valA < valB) return ascending ? -1 : 1;
+            if (valA > valB) return ascending ? 1 : -1;
+            return 0;
+          });
+          return Promise.resolve({ data: sorted, error: null });
+        };
+        return {
+          order,
+          then: (fn) => Promise.resolve({ data: get(), error: null }).then(fn)
+        };
+      },
+      insert: (rows) => {
+        const data = get();
+        const newRows = rows.map(row => ({
+          id: Math.random().toString(36).substring(2, 11),
+          created_at: new Date().toISOString(),
+          ...row
+        }));
+        save([...data, ...newRows]);
+        return {
+          select: () => Promise.resolve({ data: newRows, error: null }),
+          then: (fn) => Promise.resolve({ data: newRows, error: null }).then(fn)
+        };
+      },
+      delete: () => ({
+        eq: (field, value) => {
+          if (field === 'id') {
+            save(get().filter(item => item.id !== value));
+            return Promise.resolve({ data: null, error: null });
+          }
+          return Promise.resolve({ data: null, error: new Error('Filtro no soportado en mock') });
+        }
+      })
+    };
+  };
+
+  // ─── Tabla "equipos" ──────────────────────────────────────────────────────
+  const mockEquipos = () => {
+    const KEY = 'ligafc_equipos';
+    const get = () => getLocalData(KEY);
+    const save = (d) => saveLocalData(KEY, d);
+
+    return {
+      select: () => {
+        const order = (column, { ascending = true } = {}) => {
+          const data = get();
+          const sorted = [...data].sort((a, b) => {
+            const valA = a[column] || '', valB = b[column] || '';
+            if (valA < valB) return ascending ? -1 : 1;
+            if (valA > valB) return ascending ? 1 : -1;
+            return 0;
+          });
+          return Promise.resolve({ data: sorted, error: null });
+        };
+        return {
+          order,
+          then: (fn) => Promise.resolve({ data: get(), error: null }).then(fn)
+        };
+      },
+      insert: (rows) => {
+        const data = get();
+        const newRows = rows.map(row => ({
+          id: Math.random().toString(36).substring(2, 11),
+          created_at: new Date().toISOString(),
+          ...row
+        }));
+        save([...data, ...newRows]);
+        return {
+          select: () => Promise.resolve({ data: newRows, error: null }),
+          then: (fn) => Promise.resolve({ data: newRows, error: null }).then(fn)
+        };
+      },
+      delete: () => ({
+        eq: (field, value) => {
+          if (field === 'id') {
+            save(get().filter(item => item.id !== value));
+            return Promise.resolve({ data: null, error: null });
+          }
+          return Promise.resolve({ data: null, error: new Error('Filtro no soportado en mock') });
+        }
+      })
+    };
+  };
+
   // ─── Tabla "partidos_stats" ────────────────────────────────────────────────
   const mockPartidosStats = () => {
     const KEY = 'ligafc_partidos_stats';
@@ -289,6 +385,8 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
       if (tableName === 'partidos') return mockPartidos();
       if (tableName === 'torneos')  return mockTorneos();
       if (tableName === 'partidos_stats') return mockPartidosStats();
+      if (tableName === 'jugadores') return mockJugadores();
+      if (tableName === 'equipos') return mockEquipos();
       throw new Error(`La tabla "${tableName}" no está mockeada.`);
     },
     auth: {

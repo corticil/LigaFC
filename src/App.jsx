@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useMatches } from './hooks/useMatches';
 import { useTournaments } from './hooks/useTournaments';
+import { usePlayers } from './hooks/usePlayers';
+import { useTeams } from './hooks/useTeams';
 import Login from './components/Login';
 import PublicView from './pages/PublicView';
 import AdminView from './pages/AdminView';
@@ -21,6 +23,21 @@ export default function App() {
   } = useMatches();
 
   const {
+    players,
+    playerNames,
+    addPlayer,
+    deletePlayer,
+  } = usePlayers();
+
+  const {
+    teamsList,
+    teamsNormalized,
+    addTeam,
+    deleteTeam,
+    getTeamById,
+  } = useTeams();
+
+  const {
     tournaments,
     activeTournamentId,
     setActiveTournamentId,
@@ -29,7 +46,7 @@ export default function App() {
     pendingMatches,
     addTournament,
     deleteTournament
-  } = useTournaments(matches);
+  } = useTournaments(matches, playerNames);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
@@ -163,7 +180,10 @@ VITE_SUPABASE_ANON_KEY=tu_anon_key_de_supabase_aqui`}
               filteredMatches={filteredMatches} 
               filters={filters} 
               loading={loading} 
-              error={error} 
+              error={error}
+              players={playerNames}
+              teamsList={teamsNormalized}
+              getTeamById={getTeamById}
             />
           } />
           
@@ -183,6 +203,13 @@ VITE_SUPABASE_ANON_KEY=tu_anon_key_de_supabase_aqui`}
                 pendingMatches={pendingMatches}
                 addTournament={addTournament}
                 deleteTournament={deleteTournament}
+                players={players}
+                playerNames={playerNames}
+                onAddPlayer={addPlayer}
+                onDeletePlayer={deletePlayer}
+                teamsList={teamsList}
+                onAddTeam={addTeam}
+                onDeleteTeam={deleteTeam}
               />
             ) : (
               <Login onAuthenticate={setIsAuthenticated} />
