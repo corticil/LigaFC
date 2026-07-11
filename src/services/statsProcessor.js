@@ -2,6 +2,8 @@ import { supabase } from '../config/supabaseClient';
 import Tesseract from 'tesseract.js';
 import { teams as defaultTeams } from '../data/teams';
 
+const devLog = (...args) => { if (import.meta.env.DEV) console.log(...args); };
+
 export const GEMINI_MODELS = {
   flash: 'gemini-2.5-flash',
   flashLite: 'gemini-3.1-flash-lite',
@@ -115,7 +117,7 @@ async function callGeminiViaProxy(imageFile, model = GEMINI_MODELS.flash) {
 
   // Fallback automático: si Flash devuelve 429 (rate limit), reintentar con Flash-Lite
   if (response.status === 429 && model === GEMINI_MODELS.flash) {
-    console.log('%c[Gemini] Flash agotado (429), cambiando a Flash-Lite...', 'background:#222;color:#f59e0b;font-weight:bold');
+    devLog('%c[Gemini] Flash agotado (429), cambiando a Flash-Lite...', 'background:#222;color:#f59e0b;font-weight:bold');
     response = await doFetch(GEMINI_MODELS.flashLite);
     model = GEMINI_MODELS.flashLite;
   }
@@ -126,7 +128,7 @@ async function callGeminiViaProxy(imageFile, model = GEMINI_MODELS.flash) {
   }
 
   const data = await response.json();
-  console.log('%c[Gemini] Respuesta raw:', 'background:#222;color:#f97316;font-weight:bold', JSON.parse(JSON.stringify(data)));
+  devLog('%c[Gemini] Respuesta raw:', 'background:#222;color:#f97316;font-weight:bold', JSON.parse(JSON.stringify(data)));
   let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error('Gemini no devolvió texto en la respuesta');
 
@@ -145,7 +147,7 @@ async function callGeminiViaProxy(imageFile, model = GEMINI_MODELS.flash) {
  */
 export async function extractStatsFromImage(imageFile, model = GEMINI_MODELS.flash) {
   const parsed = await callGeminiViaProxy(imageFile, model);
-  console.log('%c[Gemini] Respuesta completa:', 'background:#222;color:#a78bfa;font-weight:bold', parsed);
+  devLog('%c[Gemini] Respuesta completa:', 'background:#222;color:#a78bfa;font-weight:bold', parsed);
   const usedModel = parsed._model || model;
   delete parsed._model;
   const result = {
@@ -158,7 +160,7 @@ export async function extractStatsFromImage(imageFile, model = GEMINI_MODELS.fla
     rendimiento_general: parsed.rendimiento_general || {},
     jugadores_stats: parsed.jugadores_stats || [],
   };
-  console.log('%c[Gemini] Datos normalizados:', 'background:#222;color:#a78bfa;font-weight:bold', result);
+  devLog('%c[Gemini] Datos normalizados:', 'background:#222;color:#a78bfa;font-weight:bold', result);
   result.modelo_usado = usedModel;
   return result;
 }
@@ -172,7 +174,7 @@ export async function extractStatsFromImage(imageFile, model = GEMINI_MODELS.fla
  */
 export async function saveStatsToSupabase(statsData, partidoId) {
   const { data: { session } } = await supabase.auth.getSession();
-  console.log('%c[Gemini] Session before save:', 'background:#222;color:#f59e0b;font-weight:bold', session ? { user: session.user.email, role: session.user.role } : 'NO SESSION');
+  devLog('%c[Gemini] Session before save:', 'background:#222;color:#f59e0b;font-weight:bold', session ? { user: session.user.email, role: session.user.role } : 'NO SESSION');
 
   const { data, error } = await supabase.from('partidos_stats').insert([{
     partido_id: partidoId || null,
@@ -591,8 +593,8 @@ export async function extractStatsFromImageOcr(imageFile, onProgress, teamsRef) 
   // Debug: mostrar la imagen pre-procesada como data URL (copiar y pegar en el navegador)
   const debugReader = new FileReader();
   debugReader.onload = () => {
-    console.log('%c[Tesseract OCR] Pre-procesada (copiá esta URL y pegala en el navegador):', 'background:#222;color:#60a5fa;font-weight:bold');
-    console.log(debugReader.result);
+    devLog('%c[Tesseract OCR] Pre-procesada (copiá esta URL y pegala en el navegador):', 'background:#222;color:#60a5fa;font-weight:bold');
+    devLog(debugReader.result);
   };
   debugReader.readAsDataURL(processed);
 
@@ -608,8 +610,8 @@ export async function extractStatsFromImageOcr(imageFile, onProgress, teamsRef) 
   });
 
   const parsed = parseOcrText(data.text, teamsRef);
-  console.log('%c[Tesseract OCR] Texto extraído:', 'background:#222;color:#ffd700;font-weight:bold', data.text);
-  console.log('%c[Tesseract OCR] Datos parseados:', 'background:#222;color:#4ade80;font-weight:bold', parsed);
+  devLog('%c[Tesseract OCR] Texto extraído:', 'background:#222;color:#ffd700;font-weight:bold', data.text);
+  devLog('%c[Tesseract OCR] Datos parseados:', 'background:#222;color:#4ade80;font-weight:bold', parsed);
   return parsed;
 }
 
@@ -690,11 +692,11 @@ function cropCanvasRegion(srcCanvas, pctX, pctY, pctW, pctH) {
 export async function extractStatsFromImageOcrWithZones(imageFile, onProgress, teamsRef) {
   const zones = loadOcrZones();
   if (!zones || zones.length === 0) {
-    console.log('%c[OCR Zonas] No hay zonas configuradas, usando OCR normal...', 'background:#222;color:#f59e0b;font-weight:bold');
+    devLog('%c[OCR Zonas] No hay zonas configuradas, usando OCR normal...', 'background:#222;color:#f59e0b;font-weight:bold');
     return extractStatsFromImageOcr(imageFile, onProgress, teamsRef);
   }
 
-  console.log(`%c[OCR Zonas] Usando ${zones.length} zona(s) persistida(s)`, 'background:#222;color:#60a5fa;font-weight:bold', zones);
+  devLog(`%c[OCR Zonas] Usando ${zones.length} zona(s) persistida(s)`, 'background:#222;color:#60a5fa;font-weight:bold', zones);
 
   const { canvas } = await loadImageToCanvas(imageFile);
   const totalZones = zones.length;
@@ -702,7 +704,7 @@ export async function extractStatsFromImageOcrWithZones(imageFile, onProgress, t
 
   for (let i = 0; i < totalZones; i++) {
     const zone = zones[i];
-    console.log(`%c[OCR Zonas] Procesando zona ${i + 1}/${totalZones}: "${zone.label}" (${zone.w}%×${zone.h}% at ${zone.x}%,${zone.y}%)`, 'background:#222;color:#a78bfa;font-weight:bold');
+    devLog(`%c[OCR Zonas] Procesando zona ${i + 1}/${totalZones}: "${zone.label}" (${zone.w}%×${zone.h}% at ${zone.x}%,${zone.y}%)`, 'background:#222;color:#a78bfa;font-weight:bold');
 
     const croppedBlob = await cropCanvasRegion(canvas, zone.x, zone.y, zone.w, zone.h);
     const processed = await preprocessImageForOcr(croppedBlob);
@@ -726,13 +728,13 @@ export async function extractStatsFromImageOcrWithZones(imageFile, onProgress, t
     });
 
     allText += (allText ? '\n' : '') + data.text;
-    console.log(`%c[OCR Zonas] Texto de zona "${zone.label}":`, 'background:#222;color:#ffd700;font-weight:bold', data.text);
+    devLog(`%c[OCR Zonas] Texto de zona "${zone.label}":`, 'background:#222;color:#ffd700;font-weight:bold', data.text);
   }
 
   if (onProgress) onProgress(100);
 
   const parsed = parseOcrText(allText, teamsRef);
-  console.log('%c[OCR Zonas] Texto combinado:', 'background:#222;color:#ffd700;font-weight:bold', allText);
-  console.log('%c[OCR Zonas] Datos parseados:', 'background:#222;color:#4ade80;font-weight:bold', parsed);
+  devLog('%c[OCR Zonas] Texto combinado:', 'background:#222;color:#ffd700;font-weight:bold', allText);
+  devLog('%c[OCR Zonas] Datos parseados:', 'background:#222;color:#4ade80;font-weight:bold', parsed);
   return parsed;
 }

@@ -27,7 +27,7 @@ Aplicación web para gestionar partidos de fútbol, con importación de estadís
 ### Variables de entorno (`.env`)
 
 ```
-VITE_GEMINI_API_KEY=tu_api_key_de_gemini
+GEMINI_API_KEY=tu_api_key_de_gemini
 VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
 VITE_SUPABASE_ANON_KEY=tu_anon_key
 VITE_APP_PASSWORD=ligafc
@@ -48,7 +48,7 @@ npm run dev -- --host
 
 ### Seguridad de la API Key
 
-`VITE_GEMINI_API_KEY` se lee en `vite.config.js` mediante `loadEnv` y se inyecta solo en el proxy del servidor de desarrollo (`/api/gemini`). Nunca se expone al bundle del navegador.
+`GEMINI_API_KEY` se lee en `vite.config.js` mediante `loadEnv` y se inyecta solo en el proxy del servidor de desarrollo (`/api/gemini`). Nunca se expone al bundle del navegador.
 
 ## Flujo de importación de estadísticas
 

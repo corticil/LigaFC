@@ -14,10 +14,13 @@ CREATE POLICY "anon_select_jugadores" ON jugadores
   FOR SELECT USING (true);
 
 CREATE POLICY "auth_insert_jugadores" ON jugadores
-  FOR INSERT WITH CHECK (true);
+  FOR INSERT TO authenticated WITH CHECK (true);
 
 CREATE POLICY "auth_delete_jugadores" ON jugadores
-  FOR DELETE USING (true);
+  FOR DELETE TO authenticated USING (true);
+
+CREATE POLICY "auth_update_jugadores" ON jugadores
+  FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 
 -- ─── equipos ────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS equipos (
@@ -34,10 +37,13 @@ CREATE POLICY "anon_select_equipos" ON equipos
   FOR SELECT USING (true);
 
 CREATE POLICY "auth_insert_equipos" ON equipos
-  FOR INSERT WITH CHECK (true);
+  FOR INSERT TO authenticated WITH CHECK (true);
 
 CREATE POLICY "auth_delete_equipos" ON equipos
-  FOR DELETE USING (true);
+  FOR DELETE TO authenticated USING (true);
+
+CREATE POLICY "auth_update_equipos" ON equipos
+  FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 
 -- ─── Seed existing players ──────────────────────────────────────────────────
 INSERT INTO jugadores (nombre) VALUES

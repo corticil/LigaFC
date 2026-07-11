@@ -47,14 +47,7 @@ export default function Login({ onAuthenticate }) {
           animation: shake ? 'shake 0.4s ease-in-out' : 'none'
         }}
       >
-        {/* Estilo CSS inyectado temporalmente para la animación shake */}
-        <style dangerouslySetInnerHTML={{__html: `
-          @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-6px); }
-            40%, 80% { transform: translateX(6px); }
-          }
-        `}} />
+        {/* Keyframes de animación shake (definidos en index.css) */}
 
         <div className="flex flex-col items-center text-center mb-8">
           <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/5">

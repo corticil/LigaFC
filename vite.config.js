@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ mode }) => {
-  // Carga las variables de entorno incluyendo VITE_GEMINI_API_KEY
+  // Carga las variables de entorno incluyendo GEMINI_API_KEY
   // Se usa '' como prefijo para que cargue TODAS las variables (no solo VITE_)
   const env = loadEnv(mode, process.cwd(), '');
 
@@ -17,18 +17,18 @@ export default defineConfig(({ mode }) => {
         /**
          * Proxy para Gemini API: recibe peticiones del frontend en /api/gemini
          * e inyecta la API key desde el servidor (nunca expuesta al cliente).
-         * Esto evita exponer VITE_GEMINI_API_KEY en el bundle del navegador
+         * Esto evita exponer GEMINI_API_KEY en el bundle del navegador
          */
         configureServer(server) {
           server.middlewares.use('/api/gemini', async (req, res) => {
             try {
-              const apiKey = env.VITE_GEMINI_API_KEY;
+              const apiKey = env.GEMINI_API_KEY;
 
               // Si no hay key configurada, responde con error claro
               if (!apiKey) {
                 res.statusCode = 400;
                 res.setHeader('Content-Type', 'application/json');
-                res.end(JSON.stringify({ error: 'VITE_GEMINI_API_KEY no configurada en .env' }));
+                res.end(JSON.stringify({ error: 'GEMINI_API_KEY no configurada en .env' }));
                 return;
               }
 

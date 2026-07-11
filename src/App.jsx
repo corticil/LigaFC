@@ -87,7 +87,7 @@ export default function App() {
             {isLocalStorageMock ? (
               <button 
                 onClick={() => setShowDbInstructions(prev => !prev)}
-                className="flex items-center gap-1.5 text-[11px] bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-semibold px-3 py-1.5 rounded-lg transition"
+                className="flex items-center gap-1.5 text-[11px] bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-semibold px-3 py-2 rounded-lg transition"
               >
                 <Database className="w-3.5 h-3.5" />
                 <span>Modo Local</span>
@@ -104,7 +104,7 @@ export default function App() {
             {isAuthenticated && (
               <button
                 onClick={() => supabase.auth.signOut()}
-                className="flex items-center gap-1.5 text-[11px] bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-650 border border-zinc-700 text-zinc-350 font-bold px-3 py-1.5 rounded-lg transition"
+                className="flex items-center gap-1.5 text-[11px] bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-650 border border-zinc-700 text-zinc-350 font-bold px-3 py-2 rounded-lg transition"
                 title="Cerrar sesión"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -156,7 +156,9 @@ VITE_SUPABASE_ANON_KEY=tu_anon_key_de_supabase_aqui`}
   nota text,
   fecha date default current_date not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);`}
+);
+
+ALTER TABLE partidos ENABLE ROW LEVEL SECURITY;`}
                     </pre>
                   </div>
                 </div>
