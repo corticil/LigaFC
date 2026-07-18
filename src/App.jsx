@@ -127,8 +127,8 @@ export default function App() {
               </button>
             )}
             {!isLocalStorageMock && (
-              <div className="text-emerald-400" title="Supabase Conectado">
-                <Database className="w-4 h-4" />
+              <div className="flex items-center gap-1.5 text-[11px] bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-semibold px-2.5 py-1.5 rounded-lg" title="Supabase Conectado">
+                <Database className="w-3.5 h-3.5" />
               </div>
             )}
 
