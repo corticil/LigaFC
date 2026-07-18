@@ -29,6 +29,7 @@ const NORMALIZE_KEY = {
   pases: 'Pases',
   entradas: 'Entradas',
   'entradas con éxito': 'Entradas con éxito',
+  'entradas con exito': 'Entradas con éxito',
   entradas_con_exito: 'Entradas con éxito',
   recuperaciones: 'Recuperación de balón',
   'recuperación de balón': 'Recuperación de balón',
