@@ -84,10 +84,9 @@ export default function App() {
               FC
             </div>
             <div>
-              <h1 className="text-md sm:text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
-                LigaFC <span className="text-[10px] bg-zinc-800 text-zinc-400 font-semibold px-2 py-0.5 rounded-full border border-zinc-700">Bitácora</span>
+              <h1 className="text-md sm:text-lg font-bold tracking-tight text-white">
+                LigaFC
               </h1>
-              <p className="text-[10px] text-zinc-500">Resultados de encuentros con amigos</p>
             </div>
           </div>
 
@@ -117,7 +116,7 @@ export default function App() {
 
           <div className="flex items-center gap-3">
             {/* Indicador de Estado de Conexión */}
-            {isLocalStorageMock ? (
+            {isLocalStorageMock && (
               <button 
                 onClick={() => setShowDbInstructions(prev => !prev)}
                 className="flex items-center gap-1.5 text-[11px] bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-semibold px-3 py-2 rounded-lg transition"
@@ -126,11 +125,6 @@ export default function App() {
                 <span>Modo Local</span>
                 {showDbInstructions ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
               </button>
-            ) : (
-              <div className="flex items-center gap-1.5 text-[11px] bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-semibold px-3 py-1.5 rounded-lg">
-                <Database className="w-3.5 h-3.5" />
-                <span>Supabase Conectado</span>
-              </div>
             )}
 
             {/* Botón de Cerrar Sesión */}
