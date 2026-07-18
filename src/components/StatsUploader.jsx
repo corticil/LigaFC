@@ -38,8 +38,10 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
   const inputRef = useRef(null);
   const cameraRef = useRef(null);
 
-  const [jugador1, setJugador1] = useState(players[0] || '');
-  const [jugador2, setJugador2] = useState(players[players.length - 1] || '');
+  const [jugador1, setJugador1] = useState(players[0]?.nombre || players[0] || '');
+  const [jugador1Id, setJugador1Id] = useState(players[0]?.id || null);
+  const [jugador2, setJugador2] = useState(players[players.length - 1]?.nombre || players[players.length - 1] || '');
+  const [jugador2Id, setJugador2Id] = useState(players[players.length - 1]?.id || null);
   const [team1Id, setTeam1Id] = useState('');
   const [team2Id, setTeam2Id] = useState('');
   const [torneoId, setTorneoId] = useState('');
@@ -119,6 +121,8 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
       const matchResult = await onAddMatch({
         jugador_1: jugador1,
         jugador_2: jugador2,
+        jugador_1_id: jugador1Id,
+        jugador_2_id: jugador2Id,
         equipo_1_id: team1Id,
         equipo_2_id: team2Id,
         goles_1: parsedData.goles_local,
@@ -141,7 +145,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
       setErrorMsg(err.message || 'Error al guardar');
       setStatus('error');
     }
-  }, [parsedData, jugador1, jugador2, team1Id, team2Id, nota, fecha, torneoId, onAddMatch, navigate]);
+  }, [parsedData, jugador1, jugador2, jugador1Id, jugador2Id, team1Id, team2Id, nota, fecha, torneoId, onAddMatch, navigate]);
 
   const reset = useCallback(() => {
     setImage(null);
@@ -218,10 +222,20 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
               <select value={jugador1} onChange={e => {
                 const val = e.target.value;
                 setJugador1(val);
-                if (val === jugador2) setJugador2(players.find(p => p !== val));
+                const found = players.find(p => (p.nombre || p) === val);
+                setJugador1Id(found?.id || null);
+                if (val === jugador2) {
+                  const other = players.find(p => (p.nombre || p) !== val);
+                  setJugador2(other?.nombre || other || '');
+                  setJugador2Id(other?.id || null);
+                }
               }}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
-                {players.map(p => <option key={p} value={p}>{p}</option>)}
+                {players.map(p => {
+                  const name = p.nombre || p;
+                  const id = p.id || p;
+                  return <option key={id} value={name}>{name}</option>;
+                })}
               </select>
             </div>
             <div>
@@ -231,10 +245,20 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
               <select value={jugador2} onChange={e => {
                 const val = e.target.value;
                 setJugador2(val);
-                if (val === jugador1) setJugador1(players.find(p => p !== val));
+                const found = players.find(p => (p.nombre || p) === val);
+                setJugador2Id(found?.id || null);
+                if (val === jugador1) {
+                  const other = players.find(p => (p.nombre || p) !== val);
+                  setJugador1(other?.nombre || other || '');
+                  setJugador1Id(other?.id || null);
+                }
               }}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
-                {players.map(p => <option key={p} value={p}>{p}</option>)}
+                {players.map(p => {
+                  const name = p.nombre || p;
+                  const id = p.id || p;
+                  return <option key={id} value={name}>{name}</option>;
+                })}
               </select>
             </div>
           </div>

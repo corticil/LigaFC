@@ -103,7 +103,7 @@ export default function AdminView({
             <MatchForm 
               onAddMatch={addMatch} 
               tournaments={tournaments}
-              players={playerNames}
+              players={players}
               teamsList={teamsList.map(t => ({ id: t.id || t.slug, name: t.nombre, logoUrl: t.logo_url }))}
               onSuccess={() => {
                 filters.clearFilters();
@@ -122,7 +122,7 @@ export default function AdminView({
                 Subí una captura de pantalla de estadísticas de FC para extraer y guardar los datos automáticamente
               </p>
             </div>
-            <StatsUploader onAddMatch={addMatch} tournaments={tournaments} players={playerNames} teamsList={teamsList.map(t => ({ id: t.id || t.slug, name: t.nombre, logoUrl: t.logo_url }))} />
+            <StatsUploader onAddMatch={addMatch} tournaments={tournaments} players={players} teamsList={teamsList.map(t => ({ id: t.id || t.slug, name: t.nombre, logoUrl: t.logo_url }))} />
           </section>
         )}
         {activeTab === 'torneos' && (

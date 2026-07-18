@@ -4,8 +4,10 @@ import { PlusCircle, Trophy, User } from 'lucide-react';
 
 export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], players = [], teamsList = [] }) {
   const navigate = useNavigate();
-  const [jugador1, setJugador1] = useState(players[0] || '');
-  const [jugador2, setJugador2] = useState(players[1] || '');
+  const [jugador1, setJugador1] = useState(players[0]?.nombre || players[0] || '');
+  const [jugador1Id, setJugador1Id] = useState(players[0]?.id || null);
+  const [jugador2, setJugador2] = useState(players[1]?.nombre || players[1] || '');
+  const [jugador2Id, setJugador2Id] = useState(players[1]?.id || null);
   const [equipo1Id, setEquipo1Id] = useState(teamsList[0]?.id || '');
   const [equipo2Id, setEquipo2Id] = useState(teamsList[1]?.id || '');
   const [goles1, setGoles1] = useState('');
@@ -43,11 +45,18 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], pla
       return;
     }
 
+    if (!equipo1Id || !equipo2Id) {
+      setValidationError('Debes seleccionar ambos equipos.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     const result = await onAddMatch({
       jugador_1: jugador1,
       jugador_2: jugador2,
+      jugador_1_id: jugador1Id,
+      jugador_2_id: jugador2Id,
       equipo_1_id: equipo1Id,
       equipo_2_id: equipo2Id,
       goles_1: g1,
@@ -107,18 +116,25 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], pla
                 onChange={(e) => {
                   const val = e.target.value;
                   setJugador1(val);
+                  const found = players.find(p => (p.nombre || p) === val);
+                  setJugador1Id(found?.id || null);
                   if (val === jugador2) {
-                    const other = players.find(p => p !== val);
-                    setJugador2(other);
+                    const other = players.find(p => (p.nombre || p) !== val);
+                    setJugador2(other?.nombre || other || '');
+                    setJugador2Id(other?.id || null);
                   }
                 }}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
               >
-                {players.map(player => (
-                  <option key={`form-p1-${player}`} value={player}>
-                    {player}
-                  </option>
-                ))}
+                {players.map(player => {
+                  const name = player.nombre || player;
+                  const id = player.id || player;
+                  return (
+                    <option key={`form-p1-${id}`} value={name}>
+                      {name}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -188,18 +204,25 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], pla
                 onChange={(e) => {
                   const val = e.target.value;
                   setJugador2(val);
+                  const found = players.find(p => (p.nombre || p) === val);
+                  setJugador2Id(found?.id || null);
                   if (val === jugador1) {
-                    const other = players.find(p => p !== val);
-                    setJugador1(other);
+                    const other = players.find(p => (p.nombre || p) !== val);
+                    setJugador1(other?.nombre || other || '');
+                    setJugador1Id(other?.id || null);
                   }
                 }}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
               >
-                {players.map(player => (
-                  <option key={`form-p2-${player}`} value={player}>
-                    {player}
-                  </option>
-                ))}
+                {players.map(player => {
+                  const name = player.nombre || player;
+                  const id = player.id || player;
+                  return (
+                    <option key={`form-p2-${id}`} value={name}>
+                      {name}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
