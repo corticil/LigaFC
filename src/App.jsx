@@ -8,6 +8,7 @@ import Login from './components/Login';
 import PublicView from './pages/PublicView';
 import AdminView from './pages/AdminView';
 import { supabase, isLocalStorageMock } from './config/supabaseClient';
+import useAnalytics from './hooks/useAnalytics';
 import { Database, Code, ChevronDown, ChevronUp, LogOut } from 'lucide-react';
 
 export default function App() {
@@ -36,6 +37,8 @@ export default function App() {
     deleteTeam,
     getTeamById,
   } = useTeams();
+
+  useAnalytics();
 
   const {
     tournaments,
