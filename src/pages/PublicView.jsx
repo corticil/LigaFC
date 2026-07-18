@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatsOverview from '../components/StatsOverview';
@@ -7,6 +8,7 @@ import { useMatchStats } from '../hooks/useMatchStats';
 
 export default function PublicView({ stats, filteredMatches, filters, loading, error, players = [], teamsList = [], getTeamById = null }) {
   const { getStatsForMatch } = useMatchStats();
+
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       {/* Panel de Estadísticas */}

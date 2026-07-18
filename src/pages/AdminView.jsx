@@ -25,6 +25,7 @@ export default function AdminView({
   deleteTournament,
   players,
   playerNames,
+  uniquePlayers,
   onAddPlayer,
   onDeletePlayer,
   teamsList,
@@ -162,7 +163,7 @@ export default function AdminView({
               error={null}
               readOnly={false}
               getStatsForMatch={getStatsForMatch}
-              players={playerNames}
+              players={uniquePlayers}
               teamsList={teamsList.map(t => ({ id: t.id || t.slug, name: t.nombre, logoUrl: t.logo_url }))}
             />
           </section>

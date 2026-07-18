@@ -10,7 +10,7 @@ export function usePlayers() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('jugadores')
+        .from('jugadores_v2')
         .select('*')
         .order('nombre', { ascending: true });
       if (error) throw error;
@@ -25,7 +25,7 @@ export function usePlayers() {
           created_at: new Date().toISOString(),
         }));
         for (const p of seed) {
-          await supabase.from('jugadores').insert([{ nombre: p.nombre }]);
+          await supabase.from('jugadores_v2').insert([{ nombre: p.nombre }]);
         }
         setPlayers(seed);
       }
@@ -54,7 +54,7 @@ export function usePlayers() {
         return { success: false, error: 'Ya existe un jugador con ese nombre' };
       }
       const { data, error } = await supabase
-        .from('jugadores')
+        .from('jugadores_v2')
         .insert([{ nombre: trimmed }])
         .select();
       if (error) throw error;
@@ -70,7 +70,7 @@ export function usePlayers() {
 
   const deletePlayer = async (id) => {
     try {
-      const { error } = await supabase.from('jugadores').delete().eq('id', id);
+      const { error } = await supabase.from('jugadores_v2').delete().eq('id', id);
       if (error) throw error;
       setPlayers(prev => prev.filter(p => p.id !== id));
       return { success: true };

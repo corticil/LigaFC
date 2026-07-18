@@ -382,11 +382,11 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
 
   supabase = {
     from: (tableName) => {
-      if (tableName === 'partidos') return mockPartidos();
+      if (tableName === 'partidos_v2') return mockPartidos();
       if (tableName === 'torneos')  return mockTorneos();
-      if (tableName === 'partidos_stats') return mockPartidosStats();
-      if (tableName === 'jugadores') return mockJugadores();
-      if (tableName === 'equipos') return mockEquipos();
+      if (tableName === 'partidos_stats_v2') return mockPartidosStats();
+      if (tableName === 'jugadores_v2') return mockJugadores();
+      if (tableName === 'equipos_v2') return mockEquipos();
       throw new Error(`La tabla "${tableName}" no está mockeada.`);
     },
     auth: {

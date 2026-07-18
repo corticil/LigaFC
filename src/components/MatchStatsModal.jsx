@@ -126,11 +126,11 @@ export default function MatchStatsModal({ match, stats, onClose, resolveTeam = n
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Stats por Jugador</span>
               </div>
               <div className="divide-y divide-zinc-800/50">
-                {stats.jugadores_stats.map((j, i) => (
+                {(stats.jugadores_stats || []).map((j, i) => (
                   <div key={i} className="px-4 py-3 space-y-2 hover:bg-zinc-800/20 transition-colors">
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${j.equipo === 'local' ? 'bg-emerald-400' : 'bg-indigo-400'}`} />
-                      <span className="text-xs font-bold text-white">{j.nombre}</span>
+                      <span className="text-xs font-bold text-white">{j.jugador_nombre || j.nombre}</span>
                       <span className="text-[10px] text-zinc-500">{j.equipo === 'local' ? 'Local' : 'Visitante'}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-center">

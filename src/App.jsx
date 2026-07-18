@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { useMatches } from './hooks/useMatches';
 import { useTournaments } from './hooks/useTournaments';
 import { usePlayers } from './hooks/usePlayers';
@@ -7,14 +7,20 @@ import { useTeams } from './hooks/useTeams';
 import Login from './components/Login';
 import PublicView from './pages/PublicView';
 import AdminView from './pages/AdminView';
+import JugadoresView from './pages/JugadoresView';
 import { supabase, isLocalStorageMock } from './config/supabaseClient';
 import useAnalytics from './hooks/useAnalytics';
-import { Database, Code, ChevronDown, ChevronUp, LogOut } from 'lucide-react';
+import { Database, Code, ChevronDown, ChevronUp, LogOut, User } from 'lucide-react';
 
 export default function App() {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+  const isJugadores = location.pathname === '/jugadores';
+
   const {
     matches,
     filteredMatches,
+    uniquePlayers,
     loading,
     error,
     addMatch,
@@ -84,6 +90,30 @@ export default function App() {
               <p className="text-[10px] text-zinc-500">Resultados de encuentros con amigos</p>
             </div>
           </div>
+
+          {/* Tabs de navegación */}
+          <nav className="flex items-center gap-1">
+            <Link
+              to="/"
+              className={`text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg transition ${
+                isHome
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }`}
+            >
+              Resumen
+            </Link>
+            <Link
+              to="/jugadores"
+              className={`text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg transition ${
+                isJugadores
+                  ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }`}
+            >
+              <span className="flex items-center gap-1"><User className="w-3 h-3" /><span className="hidden sm:inline">Jugadores</span></span>
+            </Link>
+          </nav>
 
           <div className="flex items-center gap-3">
             {/* Indicador de Estado de Conexión */}
@@ -186,7 +216,7 @@ ALTER TABLE partidos ENABLE ROW LEVEL SECURITY;`}
               filters={filters} 
               loading={loading} 
               error={error}
-              players={playerNames}
+              players={uniquePlayers}
               teamsList={teamsNormalized}
               getTeamById={getTeamById}
             />
@@ -210,6 +240,7 @@ ALTER TABLE partidos ENABLE ROW LEVEL SECURITY;`}
                 deleteTournament={deleteTournament}
                 players={players}
                 playerNames={playerNames}
+                uniquePlayers={uniquePlayers}
                 onAddPlayer={addPlayer}
                 onDeletePlayer={deletePlayer}
                 teamsList={teamsList}
@@ -219,6 +250,15 @@ ALTER TABLE partidos ENABLE ROW LEVEL SECURITY;`}
             ) : (
               <Login onAuthenticate={setIsAuthenticated} />
             )
+          } />
+
+          <Route path="/jugadores" element={
+            <JugadoresView 
+              matches={matches}
+              filteredMatches={filteredMatches}
+              players={uniquePlayers}
+              getTeamById={getTeamById}
+            />
           } />
 
           <Route path="*" element={<Navigate to="/" replace />} />

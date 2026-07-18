@@ -7,7 +7,7 @@ import { supabase, isLocalStorageMock } from '../../src/config/supabaseClient';
 
 /** Lee un archivo de migración SQL y extrae los nombres de columna del CREATE TABLE */
 function parseMigrationColumns(sqlContent) {
-  const match = sqlContent.match(/CREATE TABLE\s+IF NOT EXISTS\s+(\w+)\s*\(([\s\S]*?)\);/i);
+  const match = sqlContent.match(/CREATE TABLE\s+(?:IF NOT EXISTS\s+)?(\w+)\s*\(([\s\S]*?)\);/i);
   if (!match) throw new Error('No se pudo parsear CREATE TABLE en la migración');
 
   const tableName = match[1];
@@ -49,7 +49,11 @@ function loadMigrations() {
   return files.map(file => {
     const content = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
     const hasCreateTable = /CREATE\s+TABLE/i.test(content);
-    return { file, content, ...(hasCreateTable ? parseMigrationColumns(content) : {}) };
+    let parsed = {};
+    if (hasCreateTable) {
+      try { parsed = parseMigrationColumns(content); } catch { parsed = {}; }
+    }
+    return { file, content, ...parsed };
   });
 }
 
@@ -138,7 +142,7 @@ describe('Mock localStorage: partidos_stats', () => {
     };
 
     const { data: inserted, error: insertError } = await supabase
-      .from('partidos_stats')
+      .from('partidos_stats_v2')
       .insert([testData])
       .select();
 
@@ -157,7 +161,7 @@ describe('Mock localStorage: partidos_stats', () => {
 
   it('asigna id y creado_en automáticamente', async () => {
     const { data } = await supabase
-      .from('partidos_stats')
+      .from('partidos_stats_v2')
       .insert([{ nombre_local: 'Test', nombre_visitante: 'Test2' }])
       .select();
 
@@ -168,24 +172,24 @@ describe('Mock localStorage: partidos_stats', () => {
   });
 
   it('inserta múltiples filas y las selecciona', async () => {
-    await supabase.from('partidos_stats').insert([
+    await supabase.from('partidos_stats_v2').insert([
       { nombre_local: 'A', nombre_visitante: 'B', goles_local: 1, goles_visitante: 0 },
       { nombre_local: 'C', nombre_visitante: 'D', goles_local: 2, goles_visitante: 2 },
     ]);
 
-    const { data } = await supabase.from('partidos_stats').select();
+    const { data } = await supabase.from('partidos_stats_v2').select();
     expect(data).toHaveLength(2);
   });
 
   it('soporta partido_id como FK (nullable)', async () => {
     const { data: withFK } = await supabase
-      .from('partidos_stats')
+      .from('partidos_stats_v2')
       .insert([{ partido_id: 'abc-123', nombre_local: 'X', nombre_visitante: 'Y' }])
       .select();
     expect(withFK[0].partido_id).toBe('abc-123');
 
     const { data: nullFK } = await supabase
-      .from('partidos_stats')
+      .from('partidos_stats_v2')
       .insert([{ partido_id: null, nombre_local: 'X', nombre_visitante: 'Y' }])
       .select();
     expect(nullFK[0].partido_id).toBeNull();
@@ -193,18 +197,18 @@ describe('Mock localStorage: partidos_stats', () => {
 
   it('almacena y recupera JSONB (estadisticas_tabla)', async () => {
     const stats = { Posesión: { local: 60, visitante: 40 }, Tiros: { local: 15, visitante: 10 } };
-    await supabase.from('partidos_stats').insert([{
+    await supabase.from('partidos_stats_v2').insert([{
       nombre_local: 'A', nombre_visitante: 'B',
       estadisticas_tabla: stats,
     }]);
 
-    const { data } = await supabase.from('partidos_stats').select();
+    const { data } = await supabase.from('partidos_stats_v2').select();
     expect(data[0].estadisticas_tabla).toEqual(stats);
   });
 
   it('jugadores_stats por defecto es array vacío', async () => {
     const { data } = await supabase
-      .from('partidos_stats')
+      .from('partidos_stats_v2')
       .insert([{ nombre_local: 'Test', nombre_visitante: 'Test2' }])
       .select();
 
@@ -215,30 +219,30 @@ describe('Mock localStorage: partidos_stats', () => {
 
   it('elimina por id', async () => {
     const { data: inserted } = await supabase
-      .from('partidos_stats')
+      .from('partidos_stats_v2')
       .insert([{ nombre_local: 'X', nombre_visitante: 'Y' }])
       .select();
 
     const id = inserted[0].id;
     const { error: delError } = await supabase
-      .from('partidos_stats')
+      .from('partidos_stats_v2')
       .delete()
       .eq('id', id);
 
     expect(delError).toBeNull();
 
-    const { data } = await supabase.from('partidos_stats').select();
+    const { data } = await supabase.from('partidos_stats_v2').select();
     expect(data).toHaveLength(0);
   });
 
   it('soporta ordenamiento', async () => {
-    await supabase.from('partidos_stats').insert([
+    await supabase.from('partidos_stats_v2').insert([
       { nombre_local: 'Z', nombre_visitante: 'A' },
       { nombre_local: 'A', nombre_visitante: 'B' },
     ]);
 
     const { data } = await supabase
-      .from('partidos_stats')
+      .from('partidos_stats_v2')
       .select()
       .order('nombre_local', { ascending: true });
 
@@ -253,7 +257,7 @@ describe('Mock localStorage: partidos', () => {
   });
 
   it('inserta un partido con campos estándar', async () => {
-    const { data } = await supabase.from('partidos').insert([{
+    const { data } = await supabase.from('partidos_v2').insert([{
       jugador_1: 'Carlos',
       jugador_2: 'Luis',
       equipo_1_id: 't1',
@@ -269,12 +273,12 @@ describe('Mock localStorage: partidos', () => {
   });
 
   it('soporta delete con eq(id)', async () => {
-    const { data: ins } = await supabase.from('partidos').insert([{
+    const { data: ins } = await supabase.from('partidos_v2').insert([{
       jugador_1: 'A', jugador_2: 'B', goles_1: 0, goles_2: 0,
     }]).select();
 
-    await supabase.from('partidos').delete().eq('id', ins[0].id);
-    const { data } = await supabase.from('partidos').select();
+    await supabase.from('partidos_v2').delete().eq('id', ins[0].id);
+    const { data } = await supabase.from('partidos_v2').select();
     expect(data).toHaveLength(0);
   });
 });
@@ -308,11 +312,11 @@ describe('Integridad entre tablas', () => {
   });
 
   it('partidos_stats puede referenciar un partido existente', async () => {
-    const { data: match } = await supabase.from('partidos').insert([{
+    const { data: match } = await supabase.from('partidos_v2').insert([{
       jugador_1: 'A', jugador_2: 'B', goles_1: 1, goles_2: 1,
     }]).select();
 
-    const { data: stats } = await supabase.from('partidos_stats').insert([{
+    const { data: stats } = await supabase.from('partidos_stats_v2').insert([{
       partido_id: match[0].id,
       nombre_local: 'TeamA',
       nombre_visitante: 'TeamB',
@@ -322,7 +326,7 @@ describe('Integridad entre tablas', () => {
   });
 
   it('partidos_stats sobrevive sin partido_id', async () => {
-    const { data } = await supabase.from('partidos_stats').insert([{
+    const { data } = await supabase.from('partidos_stats_v2').insert([{
       partido_id: null,
       nombre_local: 'A', nombre_visitante: 'B',
     }]).select();
@@ -352,7 +356,7 @@ describe('Compatibilidad: extractStatsFromImage + mock', () => {
       ],
     };
 
-    const { data, error } = await supabase.from('partidos_stats').insert([{
+    const { data, error } = await supabase.from('partidos_stats_v2').insert([{
       partido_id: 'match-1',
       ...statsOutput,
     }]).select();

@@ -4,7 +4,10 @@ import { Grid, Download, Check } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
 export default function H2HMatrix({ matches, players = [] }) {
-  const playerList = players.length > 0 ? players : defaultPlayers;
+  // Normalize: support both string arrays (defaultPlayers) and {id, nombre} objects
+  const playerList = players.length > 0
+    ? players.map(p => typeof p === 'string' ? p : p.nombre)
+    : defaultPlayers;
 
   const matrix = useMemo(() => {
     // Inicializar matriz

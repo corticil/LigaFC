@@ -170,7 +170,7 @@ describe('saveStatsToSupabase', () => {
 
     const result = await saveStatsToSupabase(statsData, 'partido-456');
     expect(result.id).toBe('123');
-    expect(supabase.from).toHaveBeenCalledWith('partidos_stats');
+    expect(supabase.from).toHaveBeenCalledWith('partidos_stats_v2');
   });
 });
 

@@ -176,7 +176,7 @@ export async function saveStatsToSupabase(statsData, partidoId) {
   const { data: { session } } = await supabase.auth.getSession();
   devLog('%c[Gemini] Session before save:', 'background:#222;color:#f59e0b;font-weight:bold', session ? { user: session.user.email, role: session.user.role } : 'NO SESSION');
 
-  const { data, error } = await supabase.from('partidos_stats').insert([{
+  const { data, error } = await supabase.from('partidos_stats_v2').insert([{
     partido_id: partidoId || null,
     nombre_local: statsData.nombre_local,
     nombre_visitante: statsData.nombre_visitante,
@@ -189,7 +189,9 @@ export async function saveStatsToSupabase(statsData, partidoId) {
   }]).select();
 
   if (error) throw error;
-  return data?.[0] || data;
+  const saved = data?.[0] || data;
+
+  return saved;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

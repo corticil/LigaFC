@@ -20,7 +20,7 @@ export function useMatchStats() {
     const fetchStats = async () => {
       try {
         const { data, error } = await supabase
-          .from('partidos_stats')
+          .from('partidos_stats_v2')
           .select('*')
           .is('eliminado_en', null);
         if (error) throw error;

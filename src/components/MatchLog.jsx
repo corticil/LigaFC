@@ -130,8 +130,8 @@ export default function MatchLog({
                 >
                   <option value="">-- Jugador 1 --</option>
                   {players.map(player => (
-                    <option key={`p1-${player}`} value={player}>
-                      {player}
+                    <option key={`p1-${player.id}`} value={player.id}>
+                      {player.nombre}
                     </option>
                   ))}
                 </select>
@@ -148,11 +148,11 @@ export default function MatchLog({
                   <option value="">-- Jugador 2 --</option>
                   {players.map(player => (
                     <option 
-                      key={`p2-${player}`} 
-                      value={player}
-                      disabled={player === h2hPlayer1}
+                      key={`p2-${player.id}`} 
+                      value={player.id}
+                      disabled={player.id === h2hPlayer1}
                     >
-                      {player}
+                      {player.nombre}
                     </option>
                   ))}
                 </select>

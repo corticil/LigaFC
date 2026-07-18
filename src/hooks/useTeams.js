@@ -20,7 +20,7 @@ export function useTeams() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('equipos')
+        .from('equipos_v2')
         .select('*')
         .order('nombre', { ascending: true });
       if (error) throw error;
@@ -37,7 +37,7 @@ export function useTeams() {
           created_at: new Date().toISOString(),
         }));
         for (const t of seed) {
-          await supabase.from('equipos').insert([{ nombre: t.nombre, slug: t.slug, logo_url: t.logo_url }]);
+          await supabase.from('equipos_v2').insert([{ nombre: t.nombre, slug: t.slug, logo_url: t.logo_url }]);
         }
         setTeamsList(seed);
       }
@@ -69,7 +69,7 @@ export function useTeams() {
         return { success: false, error: 'Ya existe un club con ese nombre' };
       }
       const { data, error } = await supabase
-        .from('equipos')
+        .from('equipos_v2')
         .insert([{ nombre: trimmedName, slug, logo_url: logo_url || null }])
         .select();
       if (error) throw error;
@@ -85,7 +85,7 @@ export function useTeams() {
 
   const deleteTeam = async (id) => {
     try {
-      const { error } = await supabase.from('equipos').delete().eq('id', id);
+      const { error } = await supabase.from('equipos_v2').delete().eq('id', id);
       if (error) throw error;
       setTeamsList(prev => prev.filter(t => t.id !== id));
       return { success: true };
