@@ -1,0 +1,8 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "responsive-checker": {
+      "description": "Analyzes React/Tailwind components for responsive design issues. Do NOT invoke after every file edit. Only invoke ONCE at the very end of all tasks when the user asks for a final responsive audit."
+    }
+  }
+}

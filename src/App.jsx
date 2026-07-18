@@ -10,12 +10,13 @@ import AdminView from './pages/AdminView';
 import JugadoresView from './pages/JugadoresView';
 import { supabase, isLocalStorageMock } from './config/supabaseClient';
 import useAnalytics from './hooks/useAnalytics';
-import { Database, Code, ChevronDown, ChevronUp, LogOut, User } from 'lucide-react';
+import { Database, Code, ChevronDown, ChevronUp, LogOut, User, Lock } from 'lucide-react';
 
 export default function App() {
   const location = useLocation();
   const isHome = location.pathname === '/';
   const isJugadores = location.pathname === '/jugadores';
+  const isAdmin = location.pathname === '/admin';
 
   const {
     matches,
@@ -78,7 +79,7 @@ export default function App() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-emerald-500/30 selection:text-white">
       {/* Navbar / Encabezado */}
       <header className="border-b border-zinc-900 bg-zinc-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-auto sm:h-16 flex flex-wrap sm:flex-nowrap items-center justify-between gap-y-0 sm:gap-0 py-2 sm:py-0">
           <div className="flex items-center gap-2.5">
             <div className="bg-emerald-500 text-zinc-950 p-2 rounded-xl font-black text-lg tracking-tighter flex items-center justify-center shadow-lg shadow-emerald-500/20">
               FC
@@ -91,10 +92,10 @@ export default function App() {
           </div>
 
           {/* Tabs de navegación */}
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-1.5 w-full sm:w-auto order-last sm:order-none justify-center sm:justify-start">
             <Link
               to="/"
-              className={`text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg transition ${
+              className={`text-sm sm:text-xs font-semibold px-4 sm:px-3 py-2 sm:py-1.5 rounded-lg transition ${
                 isHome
                   ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                   : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -104,13 +105,23 @@ export default function App() {
             </Link>
             <Link
               to="/jugadores"
-              className={`text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg transition ${
+              className={`text-sm sm:text-xs font-semibold px-4 sm:px-3 py-2 sm:py-1.5 rounded-lg transition ${
                 isJugadores
                   ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
                   : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
               }`}
             >
-              <span className="flex items-center gap-1"><User className="w-3 h-3" /><span className="hidden sm:inline">Jugadores</span></span>
+              <span className="flex items-center gap-1"><User className="w-3 h-3" /><span>Jugadores</span></span>
+            </Link>
+            <Link
+              to="/admin"
+              className={`text-sm sm:text-xs font-semibold px-4 sm:px-3 py-2 sm:py-1.5 rounded-lg transition ${
+                isAdmin
+                  ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }`}
+            >
+              <span className="flex items-center gap-1"><Lock className="w-3 h-3" /><span>Admin</span></span>
             </Link>
           </nav>
 

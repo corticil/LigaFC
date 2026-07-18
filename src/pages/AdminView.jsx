@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { PlusCircle, Trophy, Sparkles, ArrowLeft, Trash2, Users } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { PlusCircle, Trophy, Sparkles, Trash2, Users } from 'lucide-react';
 import MatchForm from '../components/MatchForm';
 import TournamentManager from '../components/TournamentManager';
 import StatsUploader from '../components/StatsUploader';
@@ -36,15 +35,10 @@ export default function AdminView({
   const { getStatsForMatch } = useMatchStats();
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <Link to="/" className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition">
-          <ArrowLeft className="w-3 h-3" /> Volver a la vista pública
-        </Link>
-      </div>
+    <div className="space-y-6 sm:space-y-8">
 
       {/* Pestañas de Navegación */}
-      <div className="grid grid-cols-2 sm:flex border-b border-zinc-900 max-w-lg mx-auto bg-zinc-900/20 p-1 rounded-xl gap-1">
+      <div className="grid grid-cols-3 sm:flex border-b border-zinc-900 max-w-lg mx-auto bg-zinc-900/20 p-1 rounded-xl gap-1">
         <button
           onClick={() => setActiveTab('registrar')}
           className={`py-2.5 px-3 rounded-lg text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
