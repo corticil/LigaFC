@@ -98,7 +98,11 @@ export default function JugadoresView({ filteredMatches, players = [], getTeamBy
         </div>
 
         {selectedPlayer && playerStats ? (
-          <div ref={statsRef}>
+          <div ref={statsRef} className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-6">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-800">
+              <User className="w-5 h-5 text-yellow-400" />
+              <h3 className="text-lg font-bold text-white">{selectedPlayer}</h3>
+            </div>
             <PlayerStatsSection playerStats={playerStats} resolveTeam={getTeamById} />
           </div>
         ) : (
