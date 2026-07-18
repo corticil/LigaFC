@@ -1,10 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Image, Loader2, AlertCircle, BarChart3, FileCheck, X, RotateCcw, User, Camera, Sparkles, Crop } from 'lucide-react';
+import { Upload, Image, Loader2, AlertCircle, BarChart3, FileCheck, X, RotateCcw, User, Camera } from 'lucide-react';
 import { teams as defaultTeams } from '../data/teams';
 import { PLAYERS as defaultPlayers } from '../data/players';
-import { extractStatsFromImage, extractStatsFromImageOcr, extractStatsFromImageOcrWithZones, saveStatsToSupabase, compressImage, GEMINI_MODELS } from '../services/statsProcessor';
-import ZoneEditor, { loadZones } from './ZoneEditor';
+import { extractStatsFromImage, saveStatsToSupabase, compressImage, GEMINI_MODELS } from '../services/statsProcessor';
 
 function normalize(str) {
   return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
@@ -47,10 +46,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
   const [torneoId, setTorneoId] = useState('');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [nota, setNota] = useState('');
-  const [ocrMode, setOcrMode] = useState(false);
-  const [ocrProgress, setOcrProgress] = useState(0);
-  const [showZoneEditor, setShowZoneEditor] = useState(false);
-  const [geminiModel, setGeminiModel] = useState(GEMINI_MODELS.flash);
+  const [geminiModel, setGeminiModel] = useState(GEMINI_MODELS.flashLite);
 
   // Maneja la subida de imagen: comprime y genera preview inmediata
   const handleFile = useCallback(async (file) => {
@@ -89,15 +85,8 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
     if (!image) return;
     setStatus('loading');
     setErrorMsg('');
-    setOcrProgress(0);
     try {
-      const zones = loadZones();
-      const hasZones = ocrMode && zones && zones.length > 0;
-      const data = ocrMode
-        ? hasZones
-          ? await extractStatsFromImageOcrWithZones(image, (pct) => setOcrProgress(pct), teamsList)
-          : await extractStatsFromImageOcr(image, (pct) => setOcrProgress(pct), teamsList)
-        : await extractStatsFromImage(image, geminiModel);
+      const data = await extractStatsFromImage(image, geminiModel);
       setParsedData(data);
       const matched1 = findTeam(data.nombre_local, teamsList);
       const matched2 = findTeam(data.nombre_visitante, teamsList);
@@ -109,7 +98,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
       setErrorMsg(err.message || 'Error al procesar la imagen');
       setStatus('error');
     }
-  }, [image, ocrMode, geminiModel]);
+  }, [image, geminiModel]);
 
   // Guarda el partido + estadísticas en DB y redirige al home
   const handleConfirm = useCallback(async () => {
@@ -157,7 +146,6 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
     setTorneoId('');
     setNota('');
     setFecha(new Date().toISOString().split('T')[0]);
-    setOcrProgress(0);
   }, []);
 
   const localName = parsedData?.nombre_local || '';
@@ -365,8 +353,9 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
     <div className="space-y-6">
       {!preview && (
         <div className="space-y-3">
+          {/* Drag & drop zone — desktop only */}
           <div onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onClick={() => inputRef.current?.click()}
-            className="relative cursor-pointer group">
+            className="relative cursor-pointer group hidden sm:block">
             <div className="border-2 border-dashed border-zinc-700 hover:border-emerald-500/50 bg-zinc-900/30 hover:bg-zinc-900/60 rounded-2xl p-8 sm:p-12 transition-all duration-300 flex flex-col items-center justify-center gap-4">
               <div className="p-4 bg-zinc-800/50 rounded-full group-hover:bg-emerald-500/10 group-hover:scale-110 transition-all duration-300">
                 <Upload className="w-8 h-8 text-zinc-500 group-hover:text-emerald-400 transition-colors" />
@@ -379,11 +368,8 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
             </div>
             <input ref={inputRef} type="file" accept="image/*" onChange={handleSelect} className="hidden" />
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 border-t border-zinc-800"></div>
-            <span className="text-[10px] text-zinc-600 font-medium">o</span>
-            <div className="flex-1 border-t border-zinc-800"></div>
-          </div>
+
+          {/* Camera button — always visible */}
           <button onClick={() => cameraRef.current?.click()}
             className="w-full py-3 rounded-xl text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition flex items-center justify-center gap-2 border border-zinc-700 hover:border-zinc-600">
             <Camera className="w-4 h-4" />
@@ -391,42 +377,22 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
           </button>
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={handleSelect} className="hidden" />
 
-          {/* Switch: Gemini IA vs OCR Tesseract (visible desde la subida) */}
-          <div className="flex items-center justify-center gap-3 px-1 pt-2">
-            <span className={`text-[10px] font-medium uppercase tracking-wider ${!ocrMode ? 'text-emerald-400' : 'text-zinc-600'}`}>
-              <Sparkles className="w-3 h-3 inline mr-1" />Gemini IA
-            </span>
+          {/* Model selector */}
+          <div className="flex items-center justify-center gap-2 px-1 pt-1">
+            <span className="text-[11px] text-zinc-600">Modelo:</span>
             <button
-              type="button"
-              role="switch"
-              aria-checked={ocrMode}
-              onClick={() => setOcrMode(prev => !prev)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${ocrMode ? 'bg-yellow-500' : 'bg-emerald-500'}`}
+              onClick={() => setGeminiModel(GEMINI_MODELS.flash)}
+              className={`text-[11px] px-3 py-1.5 rounded-full font-medium transition ${geminiModel === GEMINI_MODELS.flash ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-zinc-800 text-zinc-500 border border-zinc-700 hover:text-zinc-300'}`}
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${ocrMode ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
+              Flash
             </button>
-            <span className={`text-[10px] font-medium uppercase tracking-wider ${ocrMode ? 'text-yellow-400' : 'text-zinc-600'}`}>
-              OCR Tesseract
-            </span>
+            <button
+              onClick={() => setGeminiModel(GEMINI_MODELS.flashLite)}
+              className={`text-[11px] px-3 py-1.5 rounded-full font-medium transition ${geminiModel === GEMINI_MODELS.flashLite ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-zinc-800 text-zinc-500 border border-zinc-700 hover:text-zinc-300'}`}
+            >
+              Flash-Lite
+            </button>
           </div>
-
-          {!ocrMode && (
-            <div className="flex items-center justify-center gap-2 px-1 pt-1">
-              <span className="text-[11px] text-zinc-600">Modelo:</span>
-              <button
-                onClick={() => setGeminiModel(GEMINI_MODELS.flash)}
-                className={`text-[11px] px-3 py-1.5 rounded-full font-medium transition ${geminiModel === GEMINI_MODELS.flash ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-zinc-800 text-zinc-500 border border-zinc-700 hover:text-zinc-300'}`}
-              >
-                Flash
-              </button>
-              <button
-                onClick={() => setGeminiModel(GEMINI_MODELS.flashLite)}
-                className={`text-[11px] px-3 py-1.5 rounded-full font-medium transition ${geminiModel === GEMINI_MODELS.flashLite ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-zinc-800 text-zinc-500 border border-zinc-700 hover:text-zinc-300'}`}
-              >
-                Flash-Lite
-              </button>
-            </div>
-          )}
         </div>
       )}
 
@@ -452,23 +418,14 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
             <img src={preview} alt="Preview" className="w-full max-h-80 object-contain" />
           </div>
 
-          {/* Zonas OCR (solo en modo OCR) */}
-          {ocrMode && status !== 'loading' && (
-            <button onClick={() => setShowZoneEditor(true)}
-              className="w-full py-2 rounded-xl text-[11px] font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition flex items-center justify-center gap-2 border border-zinc-700">
-              <Crop className="w-3.5 h-3.5" /> Configurar Zonas OCR
-            </button>
-          )}
-
-          {/* Barra de progreso OCR */}
-          {status === 'loading' && ocrMode && ocrProgress > 0 && (
+          {/* Barra de progreso */}
+          {status === 'loading' && (
             <div className="space-y-1">
               <div className="flex items-center justify-between text-[10px] text-zinc-500">
-                <span>Reconociendo texto...</span>
-                <span>{ocrProgress}%</span>
+                <span>Procesando con Gemini...</span>
               </div>
               <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-yellow-500 h-full rounded-full transition-all duration-300" style={{ width: `${ocrProgress}%` }} />
+                <div className="bg-emerald-500 h-full rounded-full animate-pulse" style={{ width: '60%' }} />
               </div>
             </div>
           )}
@@ -477,9 +434,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
             className={`w-full py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
               status === 'loading'
                 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                : ocrMode
-                  ? 'bg-yellow-500 hover:bg-yellow-400 text-zinc-950 shadow-lg shadow-yellow-500/20 active:scale-[0.98]'
-                  : 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/20 active:scale-[0.98]'
+                : 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/20 active:scale-[0.98]'
             }`}>
             {status === 'loading' ? <><Loader2 className="w-4 h-4 animate-spin" /> Procesando...</> : <><Image className="w-4 h-4" /> Extraer y Revisar</>}
           </button>
@@ -496,13 +451,6 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
         </div>
       )}
 
-      {showZoneEditor && (
-        <ZoneEditor
-          imageUrl={preview}
-          onSave={() => {}}
-          onClose={() => setShowZoneEditor(false)}
-        />
-      )}
     </div>
   );
 }

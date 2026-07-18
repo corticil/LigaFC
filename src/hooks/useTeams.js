@@ -25,21 +25,31 @@ export function useTeams() {
         .order('nombre', { ascending: true });
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        setTeamsList(data);
+      // Deduplicate by slug (StrictMode fix)
+      const seen = new Set();
+      const unique = (data || []).filter(t => {
+        if (seen.has(t.slug)) return false;
+        seen.add(t.slug);
+        return true;
+      });
+      if (unique.length < (data || []).length) {
+        localStorage.setItem('ligafc_equipos', JSON.stringify(unique));
+      }
+
+      if (unique.length > 0) {
+        setTeamsList(unique);
       } else {
-        // Seed from hardcoded fallback
-        const seed = hardcodedTeams.map(t => ({
-          id: t.id,
-          nombre: t.name,
-          slug: t.id,
-          logo_url: t.logoUrl,
-          created_at: new Date().toISOString(),
-        }));
-        for (const t of seed) {
-          await supabase.from('equipos_v2').insert([{ nombre: t.nombre, slug: t.slug, logo_url: t.logo_url }]);
+        // Seed from hardcoded fallback — skip if already seeded
+        const existingSlugs = new Set(data?.map(t => t.slug) || []);
+        const toSeed = hardcodedTeams.filter(t => !existingSlugs.has(t.id));
+        if (toSeed.length > 0) {
+          for (const t of toSeed) {
+            await supabase.from('equipos_v2').insert([{ nombre: t.name, slug: t.id, logo_url: t.logoUrl }]);
+          }
         }
-        setTeamsList(seed);
+        // Re-fetch after seeding to get full list
+        const { data: seeded } = await supabase.from('equipos_v2').select('*').order('nombre', { ascending: true });
+        setTeamsList(seeded || []);
       }
     } catch (err) {
       console.error('Error al cargar equipos:', err);

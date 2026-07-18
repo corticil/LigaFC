@@ -15,19 +15,32 @@ export function usePlayers() {
         .order('nombre', { ascending: true });
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        setPlayers(data);
+      // Deduplicate by nombre (StrictMode fix)
+      const seen = new Set();
+      const unique = (data || []).filter(p => {
+        const key = p.nombre.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      if (unique.length < (data || []).length) {
+        localStorage.setItem('ligafc_jugadores', JSON.stringify(unique));
+      }
+
+      if (unique.length > 0) {
+        setPlayers(unique);
       } else {
-        // Seed from hardcoded fallback
-        const seed = PLAYERS.map(nombre => ({
-          id: Math.random().toString(36).substring(2, 11),
-          nombre,
-          created_at: new Date().toISOString(),
-        }));
-        for (const p of seed) {
-          await supabase.from('jugadores_v2').insert([{ nombre: p.nombre }]);
+        // Seed from hardcoded fallback — skip if already seeded
+        const existingNames = new Set(data?.map(p => p.nombre.toLowerCase()) || []);
+        const toSeed = PLAYERS.filter(nombre => !existingNames.has(nombre.toLowerCase()));
+        if (toSeed.length > 0) {
+          for (const nombre of toSeed) {
+            await supabase.from('jugadores_v2').insert([{ nombre }]);
+          }
         }
-        setPlayers(seed);
+        // Re-fetch after seeding to get full list
+        const { data: seeded } = await supabase.from('jugadores_v2').select('*').order('nombre', { ascending: true });
+        setPlayers(seeded || []);
       }
     } catch (err) {
       console.error('Error al cargar jugadores:', err);
