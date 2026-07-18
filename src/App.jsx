@@ -126,6 +126,11 @@ export default function App() {
                 {showDbInstructions ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
               </button>
             )}
+            {!isLocalStorageMock && (
+              <div className="text-emerald-400" title="Supabase Conectado">
+                <Database className="w-4 h-4" />
+              </div>
+            )}
 
             {/* Botón de Cerrar Sesión */}
             {isAuthenticated && (
