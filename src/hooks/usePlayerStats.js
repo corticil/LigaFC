@@ -45,6 +45,9 @@ const NORMALIZE_KEY = {
   penales: 'Penales',
   'tarjetas amarillas': 'Tarjetas amarillas',
   tarjetas_amarillas: 'Tarjetas amarillas',
+  'tasa de éxito en regates': 'Éxito en regates',
+  'precisión de tiros': 'Precisión tiros',
+  'precisión de pases': 'Precisión pases',
 };
 
 /**
