@@ -367,7 +367,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
         <div className="space-y-3">
           <div onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onClick={() => inputRef.current?.click()}
             className="relative cursor-pointer group">
-            <div className="border-2 border-dashed border-zinc-700 hover:border-emerald-500/50 bg-zinc-900/30 hover:bg-zinc-900/60 rounded-2xl p-12 transition-all duration-300 flex flex-col items-center justify-center gap-4">
+            <div className="border-2 border-dashed border-zinc-700 hover:border-emerald-500/50 bg-zinc-900/30 hover:bg-zinc-900/60 rounded-2xl p-8 sm:p-12 transition-all duration-300 flex flex-col items-center justify-center gap-4">
               <div className="p-4 bg-zinc-800/50 rounded-full group-hover:bg-emerald-500/10 group-hover:scale-110 transition-all duration-300">
                 <Upload className="w-8 h-8 text-zinc-500 group-hover:text-emerald-400 transition-colors" />
               </div>
