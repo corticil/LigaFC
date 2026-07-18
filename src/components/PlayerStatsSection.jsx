@@ -1,5 +1,4 @@
-import { User, TrendingUp, Target, Crosshair, Footprints, Calendar, Flame, Trophy, BarChart3 } from 'lucide-react';
-import { getTeamById } from '../data/teams';
+import { TrendingUp, Target, Crosshair, Footprints, Flame, Trophy, BarChart3 } from 'lucide-react';
 
 function ProgressBar({ value, color }) {
   const pct = Math.min(100, Math.max(0, parseInt(value) || 0));
@@ -36,19 +35,6 @@ function StatCard({ label, value, icon: Icon, color }) {
 
 export default function PlayerStatsSection({ playerStats, resolveTeam }) {
   if (!playerStats) return null;
-
-  const teamLookup = resolveTeam || getTeamById;
-  const lastMatch = playerStats.lastMatch;
-  const lastTeam1 = lastMatch ? teamLookup(lastMatch.equipo_1_id) : null;
-  const lastTeam2 = lastMatch ? teamLookup(lastMatch.equipo_2_id) : null;
-  const lastWinner = lastMatch
-    ? lastMatch.goles_1 > lastMatch.goles_2 ? 1 : lastMatch.goles_1 < lastMatch.goles_2 ? 2 : 0
-    : 0;
-  const isPlayer1Last = lastMatch?.jugador_1 === playerStats.playerName;
-  const lastResult = !lastMatch ? null
-    : isPlayer1Last
-      ? (lastMatch.goles_1 > lastMatch.goles_2 ? 'win' : lastMatch.goles_1 < lastMatch.goles_2 ? 'loss' : 'draw')
-      : (lastMatch.goles_2 > lastMatch.goles_1 ? 'win' : lastMatch.goles_2 < lastMatch.goles_1 ? 'loss' : 'draw');
 
   return (
     <div className="space-y-4">
@@ -169,43 +155,6 @@ export default function PlayerStatsSection({ playerStats, resolveTeam }) {
                 <ProgressBar value={s.value} color={s.color} />
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Último partido */}
-      {lastMatch && (
-        <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900/60 border-b border-zinc-800">
-            <Calendar className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Último Partido</span>
-          </div>
-          <div className="px-4 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex-1 text-right min-w-0">
-                <p className="text-xs font-bold text-white truncate">{lastMatch.jugador_1}</p>
-                <p className="text-[10px] text-zinc-500 truncate">{lastTeam1?.name || ''}</p>
-              </div>
-              <div className="flex items-baseline gap-1.5 flex-shrink-0">
-                <span className={`text-lg font-black ${lastWinner === 1 ? 'text-emerald-400' : 'text-zinc-400'}`}>{lastMatch.goles_1}</span>
-                <span className="text-xs text-zinc-600 font-bold">-</span>
-                <span className={`text-lg font-black ${lastWinner === 2 ? 'text-emerald-400' : 'text-zinc-400'}`}>{lastMatch.goles_2}</span>
-              </div>
-              <div className="flex-1 text-left min-w-0">
-                <p className="text-xs font-bold text-white truncate">{lastMatch.jugador_2}</p>
-                <p className="text-[10px] text-zinc-500 truncate">{lastTeam2?.name || ''}</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                lastResult === 'win' ? 'bg-emerald-500/10 text-emerald-400' :
-                lastResult === 'loss' ? 'bg-rose-500/10 text-rose-400' :
-                'bg-zinc-800 text-zinc-400'
-              }`}>
-                {lastResult === 'win' ? 'Victoria' : lastResult === 'loss' ? 'Derrota' : 'Empate'}
-              </span>
-              <span className="text-[10px] text-zinc-600">{lastMatch.fecha}</span>
-            </div>
           </div>
         </div>
       )}
