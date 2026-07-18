@@ -38,6 +38,10 @@ export default function MatchLog({
 
   const teamLookup = (id) => {
     if (resolveTeam) return resolveTeam(id);
+    if (teamsList.length > 0) {
+      const team = teamsList.find(t => t.id === id);
+      if (team) return { id: team.id, name: team.name, logoUrl: team.logoUrl };
+    }
     return defaultGetTeamById(id);
   };
 

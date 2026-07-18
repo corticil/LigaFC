@@ -1,5 +1,5 @@
 ---
-description: Analyzes React/Tailwind components for responsive design issues. Use when checking responsive patterns, mobile layout, touch targets, overflow, or after editing JSX files in src/components/ or src/pages/.
+description: Analyzes React/Tailwind components for responsive design issues. ONLY run when explicitly requested by the user. Never run automatically.
 mode: subagent
 ---
 

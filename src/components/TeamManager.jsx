@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
-import { Shield, Plus, Trash2, Upload, Image } from 'lucide-react';
+import { Shield, Plus, Trash2, Upload } from 'lucide-react';
 import { getTeamById as getHardcodedTeam } from '../data/teams';
 
-function compressAndConvertToBase64(file, maxSize = 200) {
+function compressAndConvertToBase64(file, maxSize = 128) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -17,8 +17,10 @@ function compressAndConvertToBase64(file, maxSize = 200) {
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/png'));
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
       };
       img.onerror = () => reject(new Error('No se pudo cargar la imagen'));
       img.src = reader.result;
@@ -136,6 +138,14 @@ export default function TeamManager({ teamsList, onAddTeam, onDeleteTeam }) {
               <Upload className="w-4 h-4" />
               {logoPreview ? 'Cambiar escudo' : 'Subir escudo'}
             </button>
+            <a
+              href="https://football-logos.cc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-zinc-600 hover:text-indigo-400 transition underline underline-offset-2"
+            >
+              ¿No tenés escudo? Buscalo acá
+            </a>
             <input
               ref={fileInputRef}
               type="file"
