@@ -2,13 +2,13 @@ import { useMemo } from 'react';
 
 const STATS_ORDER = [
   'Posesión',
-  'Recuperación de balón',
   'Tiros',
   'Goles esperados',
   'Pases',
   'Entradas',
   'Entradas con éxito',
   'Recuperaciones',
+  'Recuperación de balón',
   'Atajadas',
   'Faltas cometidas',
   'Fueras de lugar',
@@ -17,6 +17,35 @@ const STATS_ORDER = [
   'Penales',
   'Tarjetas amarillas',
 ];
+
+const NORMALIZE_KEY = {
+  posesion: 'Posesión',
+  'posesión (%)': 'Posesión',
+  '% de posesión': 'Posesión',
+  posesion: 'Posesión',
+  tiros: 'Tiros',
+  'goles esperados': 'Goles esperados',
+  goles_esperados: 'Goles esperados',
+  pases: 'Pases',
+  entradas: 'Entradas',
+  'entradas con éxito': 'Entradas con éxito',
+  entradas_con_exito: 'Entradas con éxito',
+  recuperaciones: 'Recuperaciones',
+  'recuperación de balón (seg.)': 'Recuperación de balón',
+  recuperacion_de_balon: 'Recuperación de balón',
+  atajadas: 'Atajadas',
+  'faltas cometidas': 'Faltas cometidas',
+  faltas_cometidas: 'Faltas cometidas',
+  'fueras de lugar': 'Fueras de lugar',
+  fueras_de_lugar: 'Fueras de lugar',
+  'tiros de esquina': 'Tiros de esquina',
+  tiros_de_esquina: 'Tiros de esquina',
+  'tiros libres': 'Tiros libres',
+  tiros_libres: 'Tiros libres',
+  penales: 'Penales',
+  'tarjetas amarillas': 'Tarjetas amarillas',
+  tarjetas_amarillas: 'Tarjetas amarillas',
+};
 
 /**
  * Calcula estadísticas de un jugador on-demand a partir de partidos y stats.
@@ -133,8 +162,9 @@ export function usePlayerStats(playerName, matches, getStatsForMatch) {
           const numVal = typeof val === 'object' && val !== null ? val[side] : val;
           const parsed = parseFloat(String(numVal).replace('%', '').replace(/[^\d.\-]/g, ''));
           if (!isNaN(parsed)) {
-            if (!tableStatsAccum[key]) tableStatsAccum[key] = [];
-            tableStatsAccum[key].push(parsed);
+            const normalizedKey = NORMALIZE_KEY[key.toLowerCase()] || key;
+            if (!tableStatsAccum[normalizedKey]) tableStatsAccum[normalizedKey] = [];
+            tableStatsAccum[normalizedKey].push(parsed);
           }
         });
       }

@@ -55,8 +55,6 @@ function StatCard({ label, value, icon: Icon, color }) {
 export default function PlayerStatsSection({ playerStats, resolveTeam }) {
   if (!playerStats) return null;
 
-  console.log('[PlayerStatsSection] playerStats:', JSON.parse(JSON.stringify(playerStats)));
-
   const teamLookup = resolveTeam || getTeamById;
   const lastMatch = playerStats.lastMatch;
   const lastTeam1 = lastMatch ? teamLookup(lastMatch.equipo_1_id) : null;
