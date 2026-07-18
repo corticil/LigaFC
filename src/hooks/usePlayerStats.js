@@ -35,6 +35,7 @@ const NORMALIZE_KEY = {
   'recuperación de balón': 'Recuperación de balón',
   'recuperación de balón (seg.)': 'Recuperación de balón',
   recuperacion_de_balon: 'Recuperación de balón',
+  'recuperacion de balon (seg.)': 'Recuperación de balón',
   atajadas: 'Atajadas',
   'faltas cometidas': 'Faltas cometidas',
   faltas_cometidas: 'Faltas cometidas',
