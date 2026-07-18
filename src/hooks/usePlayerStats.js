@@ -185,17 +185,18 @@ export function usePlayerStats(playerName, matches, getStatsForMatch) {
     Object.entries(tableStatsAccum).forEach(([key, values]) => {
       const avgVal = avg(values);
       if (avgVal !== null) {
-        estadisticasTablaAvg[key] = avgVal;
+        const sum = values.reduce((a, b) => a + b, 0);
+        estadisticasTablaAvg[key] = { value: avgVal, sum, count: values.length };
       }
     });
 
     const sortedTableStats = STATS_ORDER
       .filter(key => estadisticasTablaAvg[key] !== undefined)
-      .map(key => ({ key, value: estadisticasTablaAvg[key] }));
+      .map(key => ({ key, ...estadisticasTablaAvg[key] }));
 
     Object.entries(estadisticasTablaAvg).forEach(([key]) => {
       if (!STATS_ORDER.includes(key)) {
-        sortedTableStats.push({ key, value: estadisticasTablaAvg[key] });
+        sortedTableStats.push({ key, ...estadisticasTablaAvg[key] });
       }
     });
 

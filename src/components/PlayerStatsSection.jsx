@@ -1,24 +1,6 @@
 import { User, TrendingUp, Target, Crosshair, Footprints, Calendar, Flame, Trophy, BarChart3 } from 'lucide-react';
 import { getTeamById } from '../data/teams';
 
-const TABLE_LABELS = {
-  'Posesión': '%',
-  'Recuperación de balón': '',
-  'Tiros': '',
-  'Goles esperados': '',
-  'Pases': '',
-  'Entradas': '',
-  'Entradas con éxito': '',
-  'Recuperaciones': '',
-  'Atajadas': '',
-  'Faltas cometidas': '',
-  'Fueras de lugar': '',
-  'Tiros de esquina': '',
-  'Tiros libres': '',
-  'Penales': '',
-  'Tarjetas amarillas': '',
-};
-
 function ProgressBar({ value, color }) {
   const pct = Math.min(100, Math.max(0, parseInt(value) || 0));
   return (
@@ -236,11 +218,11 @@ export default function PlayerStatsSection({ playerStats, resolveTeam }) {
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Estadísticas Promedio</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-zinc-800/50">
-            {playerStats.estadisticasTablaAvg.map(({ key, value }) => (
+            {playerStats.estadisticasTablaAvg.map(({ key, value, sum, count }) => (
               <div key={key} className="px-3 py-2.5">
                 <p className="text-[10px] text-zinc-500 font-medium uppercase truncate">{key}</p>
                 <p className="text-sm font-bold text-white mt-0.5">
-                  {value}{TABLE_LABELS[key] || ''}
+                  {value} <span className="text-[10px] text-zinc-500 font-normal">({sum}/{count})</span>
                 </p>
               </div>
             ))}
