@@ -18,8 +18,12 @@ export const GEMINI_MODELS = {
  * @param {number} quality - Calidad 0-1 (default 0.5)
  * @returns {Promise<Blob>} Blob con la imagen comprimida
  */
-export function compressImage(file, maxDimension = 1200, quality = 0.5) {
+export function compressImage(file, maxDimension = 800, quality = 0.4) {
   return new Promise((resolve, reject) => {
+    if (file.size > 10 * 1024 * 1024) {
+      reject(new Error('La imagen es demasiado grande. Intentá con una de menor resolución.'));
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
@@ -29,20 +33,24 @@ export function compressImage(file, maxDimension = 1200, quality = 0.5) {
           if (width > height) { height = Math.round((height / width) * maxDimension); width = maxDimension; }
           else { width = Math.round((width / height) * maxDimension); height = maxDimension; }
         }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob((blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error('No se pudo comprimir la imagen'));
-        }, 'image/webp', quality);
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('No se pudo comprimir la imagen'));
+          }, 'image/webp', quality);
+        } catch (e) {
+          reject(new Error('No hay memoria suficiente para procesar esta imagen. Tomá la foto de nuevo con menor resolución.'));
+        }
       };
-      img.onerror = reject;
+      img.onerror = () => reject(new Error('No se pudo cargar la imagen'));
       img.src = reader.result;
     };
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
     reader.readAsDataURL(file);
   });
 }

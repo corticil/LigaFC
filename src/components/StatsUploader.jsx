@@ -62,11 +62,9 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
       const reader = new FileReader();
       reader.onload = (e) => setPreview(e.target.result);
       reader.readAsDataURL(blob);
-    } catch {
-      setImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => setPreview(e.target.result);
-      reader.readAsDataURL(file);
+    } catch (err) {
+      setErrorMsg(err.message || 'No se pudo procesar la imagen. Intentá con una foto de menor resolución.');
+      setStatus('error');
     }
   }, []);
 
@@ -393,6 +391,16 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
               Flash-Lite
             </button>
           </div>
+
+          {status === 'error' && errorMsg && (
+            <div className="flex items-start gap-3 bg-rose-500/10 border border-rose-500/20 rounded-xl p-4">
+              <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-rose-400">Error al procesar imagen</p>
+                <p className="text-[11px] text-rose-300/80 mt-1">{errorMsg}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
