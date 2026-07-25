@@ -49,6 +49,7 @@ export default function App() {
 
   const {
     tournaments,
+    tournamentPlayers,
     activeTournamentId,
     setActiveTournamentId,
     activeTournament,
@@ -56,7 +57,7 @@ export default function App() {
     pendingMatches,
     addTournament,
     deleteTournament
-  } = useTournaments(matches, playerNames);
+  } = useTournaments(matches, players);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
@@ -256,6 +257,7 @@ ALTER TABLE partidos ENABLE ROW LEVEL SECURITY;`}
                 teamsList={teamsList}
                 onAddTeam={addTeam}
                 onDeleteTeam={deleteTeam}
+                tournamentPlayers={tournamentPlayers}
               />
             ) : (
               <Login onAuthenticate={setIsAuthenticated} />

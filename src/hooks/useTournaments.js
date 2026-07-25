@@ -15,6 +15,7 @@ function getAllMatchups(players) {
 export function useTournaments(allMatches, playersParam = []) {
   const playerNames = playersParam.length > 0 ? playersParam : defaultPlayers;
   const [tournaments, setTournaments] = useState([]);
+  const [tournamentPlayers, setTournamentPlayers] = useState({});
   const [loading, setLoading] = useState(true);
   const [activeTournamentId, setActiveTournamentId] = useState(() => {
     return localStorage.getItem('ligafc_active_tournament_id') || null;
@@ -38,6 +39,18 @@ export function useTournaments(allMatches, playersParam = []) {
         .order('created_at', { ascending: false });
       if (error) throw error;
       setTournaments(data || []);
+
+      const { data: tjData } = await supabase
+        .from('torneo_jugadores')
+        .select('*');
+      if (tjData) {
+        const playersMap = {};
+        tjData.forEach(row => {
+          if (!playersMap[row.torneo_id]) playersMap[row.torneo_id] = [];
+          playersMap[row.torneo_id].push(row.jugador_id);
+        });
+        setTournamentPlayers(playersMap);
+      }
     } catch (err) {
       console.error('Error al cargar torneos:', err);
     } finally {
@@ -58,6 +71,7 @@ export function useTournaments(allMatches, playersParam = []) {
     if (!activeTournament || !allMatches) return [];
 
     const tMatches = allMatches.filter(m => m.torneo_id === activeTournament.id);
+    const tPlayerIds = tournamentPlayers[activeTournament.id] || [];
 
     const playerStats = {};
     playerNames.forEach(p => {
@@ -95,19 +109,28 @@ export function useTournaments(allMatches, playersParam = []) {
 
     Object.values(playerStats).forEach(s => { s.gd = s.gf - s.ga; });
 
-    return Object.values(playerStats).sort((a, b) => {
-      if (b.pts !== a.pts) return b.pts - a.pts;
-      if (b.gd !== a.gd) return b.gd - a.gd;
-      return b.gf - a.gf;
-    });
-  }, [activeTournament, allMatches]);
+    return Object.values(playerStats)
+      .filter(s => tPlayerIds.length === 0 || tPlayerIds.includes(s.player))
+      .sort((a, b) => {
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        if (b.gd !== a.gd) return b.gd - a.gd;
+        return b.gf - a.gf;
+      });
+  }, [activeTournament, allMatches, tournamentPlayers]);
 
   // Partidos pendientes: combinaciones posibles que aún no se jugaron en el torneo activo
   const pendingMatches = useMemo(() => {
     if (!activeTournament || !allMatches) return [];
 
     const tMatches = allMatches.filter(m => m.torneo_id === activeTournament.id);
-    const allMatchups = getAllMatchups(playerNames);
+    const tPlayerIds = tournamentPlayers[activeTournament.id] || [];
+    const tPlayerNames = tPlayerIds.length > 0
+      ? playerNames.filter(name => {
+          const jugador = playersParam.find(p => p.nombre === name || p.id === name);
+          return jugador && tPlayerIds.includes(jugador.id);
+        })
+      : playerNames;
+    const allMatchups = getAllMatchups(tPlayerNames);
 
     return allMatchups.filter(matchup => {
       return !tMatches.some(m => {
@@ -118,7 +141,7 @@ export function useTournaments(allMatches, playersParam = []) {
         return (mp1 === mp1low && mp2 === mp2low) || (mp1 === mp2low && mp2 === mp1low);
       });
     });
-  }, [activeTournament, allMatches]);
+  }, [activeTournament, allMatches, tournamentPlayers, playerNames, playersParam]);
 
   const addTournament = async (tournament) => {
     try {
@@ -132,6 +155,17 @@ export function useTournaments(allMatches, playersParam = []) {
         .select();
       if (error) throw error;
       if (data && data[0]) {
+        if (tournament.playerIds && tournament.playerIds.length > 0) {
+          const rows = tournament.playerIds.map(jugadorId => ({
+            torneo_id: data[0].id,
+            jugador_id: jugadorId,
+          }));
+          await supabase.from('torneo_jugadores').insert(rows);
+          setTournamentPlayers(prev => ({
+            ...prev,
+            [data[0].id]: tournament.playerIds,
+          }));
+        }
         setTournaments(prev => [data[0], ...prev]);
         setActiveTournamentId(data[0].id);
       }
@@ -157,6 +191,7 @@ export function useTournaments(allMatches, playersParam = []) {
 
   return {
     tournaments,
+    tournamentPlayers,
     loading,
     activeTournamentId,
     setActiveTournamentId,

@@ -15,21 +15,42 @@ export default function TournamentManager({
   pendingMatches,
   addTournament, 
   deleteTournament,
-  allMatches = []
+  allMatches = [],
+  players = [],
+  tournamentPlayers = {}
 }) {
   const [showForm, setShowForm] = useState(false);
   const [newTournament, setNewTournament] = useState({ name: '', startDate: '', endDate: '' });
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState([]);
   
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const tableRef = useRef(null);
 
+  const activeTournamentPlayerCount = activeTournament ? (tournamentPlayers[activeTournament.id] || []).length : 0;
+
   const handleCreate = (e) => {
     e.preventDefault();
     if (!newTournament.name || !newTournament.startDate || !newTournament.endDate) return;
-    addTournament(newTournament);
+    if (selectedPlayerIds.length < 3) return;
+    addTournament({ ...newTournament, playerIds: selectedPlayerIds });
     setNewTournament({ name: '', startDate: '', endDate: '' });
+    setSelectedPlayerIds([]);
     setShowForm(false);
+  };
+
+  const togglePlayer = (playerId) => {
+    setSelectedPlayerIds(prev =>
+      prev.includes(playerId) ? prev.filter(id => id !== playerId) : [...prev, playerId]
+    );
+  };
+
+  const toggleAllPlayers = () => {
+    if (selectedPlayerIds.length === players.length) {
+      setSelectedPlayerIds([]);
+    } else {
+      setSelectedPlayerIds(players.map(p => p.id));
+    }
   };
 
   const handleDownload = async () => {
@@ -193,9 +214,55 @@ export default function TournamentManager({
               />
             </div>
           </div>
+
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-semibold text-zinc-400">Jugadores Participantes (mín. 3)</label>
+              <button
+                type="button"
+                onClick={toggleAllPlayers}
+                className="text-[10px] font-semibold text-yellow-400 hover:text-yellow-300 transition"
+              >
+                {selectedPlayerIds.length === players.length ? 'Deseleccionar' : 'Seleccionar Todos'}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {players.map(player => (
+                <label
+                  key={player.id}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition ${
+                    selectedPlayerIds.includes(player.id)
+                      ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
+                      : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedPlayerIds.includes(player.id)}
+                    onChange={() => togglePlayer(player.id)}
+                    className="sr-only"
+                  />
+                  <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 ${
+                    selectedPlayerIds.includes(player.id)
+                      ? 'bg-yellow-500 border-yellow-500'
+                      : 'border-zinc-600'
+                  }`}>
+                    {selectedPlayerIds.includes(player.id) && (
+                      <Check className="w-2.5 h-2.5 text-yellow-950" />
+                    )}
+                  </div>
+                  <span className="text-xs font-semibold truncate">{player.nombre}</span>
+                </label>
+              ))}
+            </div>
+            {selectedPlayerIds.length > 0 && selectedPlayerIds.length < 3 && (
+              <p className="text-[10px] text-rose-400 mt-1.5">Seleccioná al menos 3 jugadores</p>
+            )}
+          </div>
+
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-xs font-bold text-zinc-400 hover:text-white transition">Cancelar</button>
-            <button type="submit" className="px-4 py-2 bg-yellow-500 text-yellow-950 rounded-lg text-xs font-bold hover:bg-yellow-400 transition">Crear Torneo</button>
+            <button type="button" onClick={() => { setShowForm(false); setSelectedPlayerIds([]); }} className="px-4 py-2 text-xs font-bold text-zinc-400 hover:text-white transition">Cancelar</button>
+            <button type="submit" disabled={selectedPlayerIds.length < 3} className="px-4 py-2 bg-yellow-500 text-yellow-950 rounded-lg text-xs font-bold hover:bg-yellow-400 transition disabled:opacity-30 disabled:cursor-not-allowed">Crear Torneo</button>
           </div>
         </form>
       )}
@@ -215,6 +282,8 @@ export default function TournamentManager({
               <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
                 <Calendar className="w-3.5 h-3.5" />
                 <span>{activeTournament.startDate} al {activeTournament.endDate}</span>
+                <span>·</span>
+                <span>{activeTournamentPlayerCount} jugador{activeTournamentPlayerCount !== 1 ? 'es' : ''}</span>
               </div>
             </div>
             

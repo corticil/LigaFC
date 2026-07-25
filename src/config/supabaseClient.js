@@ -167,6 +167,54 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
     };
   };
 
+  // ─── Tabla "torneo_jugadores" ──────────────────────────────────────────────
+  const mockTorneoJugadores = () => {
+    const KEY = 'ligafc_torneo_jugadores';
+    const get = () => getLocalData(KEY);
+    const save = (d) => saveLocalData(KEY, d);
+
+    return {
+      select: () => {
+        const chain = {
+          _filters: [],
+          eq(field, value) {
+            this._filters.push({ field, value });
+            return this;
+          },
+          then(fn) {
+            let data = get();
+            this._filters.forEach(f => {
+              data = data.filter(item => item[f.field] === f.value);
+            });
+            return Promise.resolve({ data, error: null }).then(fn);
+          }
+        };
+        return chain;
+      },
+
+      insert: (rows) => {
+        const data = get();
+        const newRows = rows.map(row => ({
+          created_at: new Date().toISOString(),
+          ...row
+        }));
+        save([...data, ...newRows]);
+        return {
+          select: () => Promise.resolve({ data: newRows, error: null }),
+          then: (fn) => Promise.resolve({ data: newRows, error: null }).then(fn)
+        };
+      },
+
+      delete: () => ({
+        eq: (field, value) => {
+          const data = get().filter(item => item[field] !== value);
+          save(data);
+          return Promise.resolve({ data: null, error: null });
+        }
+      })
+    };
+  };
+
   // ─── Tabla "jugadores" ────────────────────────────────────────────────────
   const mockJugadores = () => {
     const KEY = 'ligafc_jugadores';
@@ -387,6 +435,7 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
       if (tableName === 'partidos_stats_v2') return mockPartidosStats();
       if (tableName === 'jugadores_v2') return mockJugadores();
       if (tableName === 'equipos_v2') return mockEquipos();
+      if (tableName === 'torneo_jugadores') return mockTorneoJugadores();
       throw new Error(`La tabla "${tableName}" no está mockeada.`);
     },
     auth: {

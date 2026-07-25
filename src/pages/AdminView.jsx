@@ -30,6 +30,7 @@ export default function AdminView({
   teamsList,
   onAddTeam,
   onDeleteTeam,
+  tournamentPlayers,
 }) {
   const [activeTab, setActiveTab] = useState('registrar');
   const { getStatsForMatch } = useMatchStats();
@@ -136,6 +137,8 @@ export default function AdminView({
             addTournament={addTournament}
             deleteTournament={deleteTournament}
             allMatches={allMatches}
+            players={players}
+            tournamentPlayers={tournamentPlayers}
           />
         )}
         {activeTab === 'gestionar' && (
