@@ -24,34 +24,34 @@ export function compressImage(file, maxDimension = 800, quality = 0.4) {
       reject(new Error('La imagen es demasiado grande. Intentá con una de menor resolución.'));
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxDimension || height > maxDimension) {
-          if (width > height) { height = Math.round((height / width) * maxDimension); width = maxDimension; }
-          else { width = Math.round((width / height) * maxDimension); height = maxDimension; }
-        }
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          canvas.toBlob((blob) => {
-            if (blob) resolve(blob);
-            else reject(new Error('No se pudo comprimir la imagen'));
-          }, 'image/webp', quality);
-        } catch (e) {
-          reject(new Error('No hay memoria suficiente para procesar esta imagen. Tomá la foto de nuevo con menor resolución.'));
-        }
-      };
-      img.onerror = () => reject(new Error('No se pudo cargar la imagen'));
-      img.src = reader.result;
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      let { width, height } = img;
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) { height = Math.round((height / width) * maxDimension); width = maxDimension; }
+        else { width = Math.round((width / height) * maxDimension); height = maxDimension; }
+      }
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('No se pudo comprimir la imagen'));
+        }, 'image/webp', quality);
+      } catch (e) {
+        reject(new Error('No hay memoria suficiente para procesar esta imagen. Tomá la foto de nuevo con menor resolución.'));
+      }
     };
-    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('No se pudo cargar la imagen'));
+    };
+    img.src = objectUrl;
   });
 }
 

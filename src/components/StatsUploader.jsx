@@ -28,7 +28,7 @@ function findTeam(name, teamsRef) {
 export default function StatsUploader({ onAddMatch, tournaments = [], players = defaultPlayers, teamsList = defaultTeams }) {
   const navigate = useNavigate();
   const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [status, setStatus] = useState('idle');
 
   const [parsedData, setParsedData] = useState(null);
@@ -55,18 +55,17 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
     setParsedData(null);
     setErrorMsg('');
     setStep('upload');
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     try {
       const blob = await compressImage(file);
       const compressedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp' });
       setImage(compressedFile);
-      const reader = new FileReader();
-      reader.onload = (e) => setPreview(e.target.result);
-      reader.readAsDataURL(blob);
+      setPreviewUrl(URL.createObjectURL(blob));
     } catch (err) {
       setErrorMsg(err.message || 'No se pudo procesar la imagen. Intentá con una foto de menor resolución.');
       setStatus('error');
     }
-  }, []);
+  }, [previewUrl]);
 
   // Drag & drop
   const handleDrop = useCallback((e) => {
@@ -136,7 +135,8 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
 
   const reset = useCallback(() => {
     setImage(null);
-    setPreview(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
     setStatus('idle');
     setParsedData(null);
     setErrorMsg('');
@@ -144,7 +144,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
     setTorneoId('');
     setNota('');
     setFecha(new Date().toISOString().split('T')[0]);
-  }, []);
+  }, [previewUrl]);
 
   const localName = parsedData?.nombre_local || '';
   const visitName = parsedData?.nombre_visitante || '';
@@ -349,7 +349,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
 
   return (
     <div className="space-y-6">
-      {!preview && (
+      {!previewUrl && (
         <div className="space-y-3">
           {/* Drag & drop zone — desktop only */}
           <div onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onClick={() => inputRef.current?.click()}
@@ -404,12 +404,12 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
         </div>
       )}
 
-      {preview && (
+      {previewUrl && (
         <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-4 space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-800 flex-shrink-0 border border-zinc-700">
-                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-white truncate">{image?.name}</p>
@@ -423,7 +423,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
           </div>
 
           <div className="rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950">
-            <img src={preview} alt="Preview" className="w-full max-h-80 object-contain" />
+            <img src={previewUrl} alt="Preview" className="w-full max-h-80 object-contain" />
           </div>
 
           {/* Barra de progreso */}
