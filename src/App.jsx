@@ -5,17 +5,19 @@ import { useTournaments } from './hooks/useTournaments';
 import { usePlayers } from './hooks/usePlayers';
 import { useTeams } from './hooks/useTeams';
 import Login from './components/Login';
+import TournamentManager from './components/TournamentManager';
 import PublicView from './pages/PublicView';
 import AdminView from './pages/AdminView';
 import JugadoresView from './pages/JugadoresView';
 import { supabase, isLocalStorageMock } from './config/supabaseClient';
 import useAnalytics from './hooks/useAnalytics';
-import { Database, Code, ChevronDown, ChevronUp, LogOut, User, Lock } from 'lucide-react';
+import { Database, Code, ChevronDown, ChevronUp, LogOut, User, Lock, Trophy } from 'lucide-react';
 
 export default function App() {
   const location = useLocation();
   const isHome = location.pathname === '/';
   const isJugadores = location.pathname === '/jugadores';
+  const isTorneos = location.pathname === '/torneos';
   const isAdmin = location.pathname === '/admin';
 
   const {
@@ -113,6 +115,16 @@ export default function App() {
               }`}
             >
               <span className="flex items-center gap-1"><User className="w-3 h-3" /><span>Jugadores</span></span>
+            </Link>
+            <Link
+              to="/torneos"
+              className={`text-sm sm:text-xs font-semibold px-4 sm:px-3 py-2 sm:py-1.5 rounded-lg transition ${
+                isTorneos
+                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }`}
+            >
+              <span className="flex items-center gap-1"><Trophy className="w-3 h-3" /><span>Torneos</span></span>
             </Link>
             <Link
               to="/admin"
@@ -231,6 +243,21 @@ ALTER TABLE partidos ENABLE ROW LEVEL SECURITY;`}
               teamsList={teamsNormalized}
               getTeamById={getTeamById}
             />
+          } />
+
+          <Route path="/torneos" element={
+            <div className="max-w-4xl mx-auto py-4">
+              <TournamentManager
+                tournaments={tournaments}
+                activeTournamentId={activeTournamentId}
+                setActiveTournamentId={setActiveTournamentId}
+                activeTournament={activeTournament}
+                standings={standings}
+                pendingMatches={pendingMatches}
+                allMatches={matches}
+                readOnly={true}
+              />
+            </div>
           } />
           
           <Route path="/admin" element={

@@ -17,7 +17,8 @@ export default function TournamentManager({
   deleteTournament,
   allMatches = [],
   players = [],
-  tournamentPlayers = {}
+  tournamentPlayers = {},
+  readOnly = false
 }) {
   const [showForm, setShowForm] = useState(false);
   const [newTournament, setNewTournament] = useState({ name: '', startDate: '', endDate: '' });
@@ -31,8 +32,7 @@ export default function TournamentManager({
 
   const handleCreate = (e) => {
     e.preventDefault();
-    if (!newTournament.name || !newTournament.startDate || !newTournament.endDate) return;
-    if (selectedPlayerIds.length < 3) return;
+    if (!newTournament.name || selectedPlayerIds.length < 3) return;
     addTournament({ ...newTournament, playerIds: selectedPlayerIds });
     setNewTournament({ name: '', startDate: '', endDate: '' });
     setSelectedPlayerIds([]);
@@ -101,13 +101,15 @@ export default function TournamentManager({
             </div>
           </div>
 
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-1.5 bg-yellow-500 hover:bg-yellow-400 text-yellow-950 px-3 py-2 rounded-lg font-bold transition text-xs whitespace-nowrap"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Torneo
-          </button>
+          {!readOnly && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="flex items-center gap-1.5 bg-yellow-500 hover:bg-yellow-400 text-yellow-950 px-3 py-2 rounded-lg font-bold transition text-xs whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4" />
+              Nuevo Torneo
+            </button>
+          )}
         </div>
       </div>
 
@@ -139,9 +141,13 @@ export default function TournamentManager({
                         {t.nombre || t.name}
                       </p>
                       <div className="flex items-center gap-2 text-[10px] text-zinc-500 mt-0.5">
-                        <Calendar className="w-2.5 h-2.5" />
-                        <span>{t.fecha_inicio || t.startDate || 'Sin fecha'} — {t.fecha_fin || t.endDate || 'Sin fecha'}</span>
-                        <span>·</span>
+                        {(t.fecha_inicio || t.startDate) && (t.fecha_fin || t.endDate) && (
+                          <>
+                            <Calendar className="w-2.5 h-2.5" />
+                            <span>{t.fecha_inicio || t.startDate} — {t.fecha_fin || t.endDate}</span>
+                            <span>·</span>
+                          </>
+                        )}
                         <span>{matchCount} partido{matchCount !== 1 ? 's' : ''}</span>
                       </div>
                     </div>
@@ -191,7 +197,6 @@ export default function TournamentManager({
                 placeholderText="Desde"
                 locale={es}
                 dateFormat="dd/MM/yyyy"
-                required
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-yellow-500 transition"
                 wrapperClassName="w-full"
               />
@@ -208,7 +213,6 @@ export default function TournamentManager({
                 placeholderText="Hasta"
                 locale={es}
                 dateFormat="dd/MM/yyyy"
-                required
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-yellow-500 transition"
                 wrapperClassName="w-full"
               />
@@ -280,9 +284,13 @@ export default function TournamentManager({
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>{activeTournament.startDate} al {activeTournament.endDate}</span>
-                <span>·</span>
+                {activeTournament.startDate && activeTournament.endDate && (
+                  <>
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>{activeTournament.startDate} al {activeTournament.endDate}</span>
+                    <span>·</span>
+                  </>
+                )}
                 <span>{activeTournamentPlayerCount} jugador{activeTournamentPlayerCount !== 1 ? 'es' : ''}</span>
               </div>
             </div>
@@ -298,18 +306,20 @@ export default function TournamentManager({
                 {downloaded ? <Check className="w-4 h-4 text-emerald-400" /> : <Download className="w-4 h-4" />}
                 <span className="hidden sm:inline">{downloaded ? '¡Guardado!' : 'Descargar'}</span>
               </button>
-              <button
-                onClick={() => {
-                  if(confirm('¿Eliminar torneo? Esto NO borrará los partidos, solo la configuración de la tabla.')) {
-                    deleteTournament(activeTournament.id);
-                  }
-                }}
+              {!readOnly && (
+                <button
+                  onClick={() => {
+                    if(confirm('¿Eliminar torneo? Esto NO borrará los partidos, solo la configuración de la tabla.')) {
+                      deleteTournament(activeTournament.id);
+                    }
+                  }}
                 data-exclude="true"
                 className="p-1.5 text-zinc-600 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
                 title="Eliminar Torneo"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
+              )}
             </div>
           </div>
 
