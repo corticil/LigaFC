@@ -11,7 +11,7 @@ import AdminView from './pages/AdminView';
 import JugadoresView from './pages/JugadoresView';
 import { supabase, isLocalStorageMock } from './config/supabaseClient';
 import useAnalytics from './hooks/useAnalytics';
-import { Database, Code, ChevronDown, ChevronUp, LogOut, User, Lock, Trophy } from 'lucide-react';
+import { Database, Code, ChevronDown, ChevronUp, LogOut, LogIn, User, Lock, Trophy } from 'lucide-react';
 
 export default function App() {
   const location = useLocation();
@@ -126,16 +126,18 @@ export default function App() {
             >
               <span className="flex items-center gap-1"><Trophy className="w-3 h-3" /><span>Torneos</span></span>
             </Link>
-            <Link
-              to="/admin"
-              className={`text-sm sm:text-xs font-semibold px-4 sm:px-3 py-2 sm:py-1.5 rounded-lg transition ${
-                isAdmin
-                  ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-              }`}
-            >
-              <span className="flex items-center gap-1"><Lock className="w-3 h-3" /><span>Admin</span></span>
-            </Link>
+            {isAuthenticated && (
+              <Link
+                to="/admin"
+                className={`text-sm sm:text-xs font-semibold px-4 sm:px-3 py-2 sm:py-1.5 rounded-lg transition ${
+                  isAdmin
+                    ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                }`}
+              >
+                <span className="flex items-center gap-1"><Lock className="w-3 h-3" /><span>Admin</span></span>
+              </Link>
+            )}
           </nav>
 
           <div className="flex items-center gap-3">
@@ -156,7 +158,17 @@ export default function App() {
               </div>
             )}
 
-            {/* Botón de Cerrar Sesión */}
+            {/* Botón de Log In / Cerrar Sesión */}
+            {!isAuthenticated && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-1.5 text-[11px] bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold px-3 py-2 rounded-lg transition"
+                title="Iniciar sesión"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Log In</span>
+              </Link>
+            )}
             {isAuthenticated && (
               <button
                 onClick={() => supabase.auth.signOut()}
