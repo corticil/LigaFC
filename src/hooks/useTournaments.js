@@ -12,8 +12,12 @@ function getAllMatchups(players) {
   return matchups;
 }
 
-export function useTournaments(allMatches, playersParam = []) {
-  const playerNames = playersParam.length > 0 ? playersParam : defaultPlayers;
+export function useTournaments(allMatches, playersParam = [], playerNamesParam = []) {
+  const playerNames = playerNamesParam.length > 0 ? playerNamesParam : defaultPlayers;
+  const nameToId = {};
+  if (playersParam.length > 0 && typeof playersParam[0] === 'object') {
+    playersParam.forEach(p => { nameToId[p.nombre] = p.id; });
+  }
   const [tournaments, setTournaments] = useState([]);
   const [tournamentPlayers, setTournamentPlayers] = useState({});
   const [loading, setLoading] = useState(true);
@@ -110,13 +114,17 @@ export function useTournaments(allMatches, playersParam = []) {
     Object.values(playerStats).forEach(s => { s.gd = s.gf - s.ga; });
 
     return Object.values(playerStats)
-      .filter(s => tPlayerIds.length === 0 || tPlayerIds.includes(s.player))
+      .filter(s => {
+        if (tPlayerIds.length === 0) return true;
+        const playerId = nameToId[s.player];
+        return playerId && tPlayerIds.includes(playerId);
+      })
       .sort((a, b) => {
         if (b.pts !== a.pts) return b.pts - a.pts;
         if (b.gd !== a.gd) return b.gd - a.gd;
         return b.gf - a.gf;
       });
-  }, [activeTournament, allMatches, tournamentPlayers]);
+  }, [activeTournament, allMatches, tournamentPlayers, nameToId]);
 
   // Partidos pendientes: combinaciones posibles que aún no se jugaron en el torneo activo
   const pendingMatches = useMemo(() => {
@@ -125,10 +133,7 @@ export function useTournaments(allMatches, playersParam = []) {
     const tMatches = allMatches.filter(m => m.torneo_id === activeTournament.id);
     const tPlayerIds = tournamentPlayers[activeTournament.id] || [];
     const tPlayerNames = tPlayerIds.length > 0
-      ? playerNames.filter(name => {
-          const jugador = playersParam.find(p => p.nombre === name || p.id === name);
-          return jugador && tPlayerIds.includes(jugador.id);
-        })
+      ? playerNames.filter(name => tPlayerIds.includes(nameToId[name]))
       : playerNames;
     const allMatchups = getAllMatchups(tPlayerNames);
 
@@ -141,7 +146,7 @@ export function useTournaments(allMatches, playersParam = []) {
         return (mp1 === mp1low && mp2 === mp2low) || (mp1 === mp2low && mp2 === mp1low);
       });
     });
-  }, [activeTournament, allMatches, tournamentPlayers, playerNames, playersParam]);
+  }, [activeTournament, allMatches, tournamentPlayers, playerNames, nameToId]);
 
   const addTournament = async (tournament) => {
     try {

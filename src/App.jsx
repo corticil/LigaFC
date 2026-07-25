@@ -57,7 +57,7 @@ export default function App() {
     pendingMatches,
     addTournament,
     deleteTournament
-  } = useTournaments(matches, players);
+  } = useTournaments(matches, players, playerNames);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
