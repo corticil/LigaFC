@@ -42,11 +42,14 @@ export default function MatchLog({
     setCurrentPage(1);
   }, [h2hPlayer1, h2hPlayer2, filterTeamId, filterDateFrom, filterDateTo]);
 
+  const dateFilterActive = filterDateFrom || filterDateTo;
   const totalPages = Math.ceil(filteredMatches.length / ITEMS_PER_PAGE);
-  const paginatedMatches = filteredMatches.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const paginatedMatches = dateFilterActive
+    ? filteredMatches
+    : filteredMatches.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+      );
 
   const teamLookup = (id) => {
     if (resolveTeam) return resolveTeam(id);
@@ -394,7 +397,7 @@ export default function MatchLog({
           </div>
         )}
 
-        {totalPages > 1 && (
+        {!dateFilterActive && totalPages > 1 && (
           <div className="flex items-center justify-center gap-3 pt-4">
             <button
               onClick={() => setCurrentPage(p => p - 1)}
