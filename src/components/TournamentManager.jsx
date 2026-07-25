@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Trophy, Plus, Trash2, Calendar, Crown, Medal, Swords, CheckCircle, ChevronRight } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import { es } from 'date-fns/locale';
@@ -27,6 +27,18 @@ export default function TournamentManager({
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const tableRef = useRef(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+
+  useEffect(() => {
+    if (showForm) setCurrentPage(1);
+  }, [showForm]);
+
+  const totalPages = Math.ceil(tournaments.length / ITEMS_PER_PAGE);
+  const paginatedTournaments = tournaments.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const activeTournamentPlayerCount = activeTournament ? (tournamentPlayers[activeTournament.id] || []).length : 0;
 
@@ -116,7 +128,7 @@ export default function TournamentManager({
       {/* Lista de Torneos */}
       {tournaments.length > 0 && !showForm && (
         <div className="space-y-3">
-          {tournaments.map(t => {
+          {paginatedTournaments.map(t => {
             const isActive = t.id === activeTournamentId;
             const matchCount = allMatches?.filter(m => m.torneo_id === t.id).length || 0;
             return (
@@ -159,6 +171,28 @@ export default function TournamentManager({
               </button>
             );
           })}
+        </div>
+      )}
+
+      {!showForm && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button
+            onClick={() => setCurrentPage(p => p - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            ← Anterior
+          </button>
+          <span className="text-xs text-zinc-400 font-medium">
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(p => p + 1)}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            Siguiente →
+          </button>
         </div>
       )}
 
