@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { teams as defaultTeams, getTeamById as defaultGetTeamById } from '../data/teams';
 import { Calendar, Trash2, Users, Shield, RotateCcw, AlertCircle, Download, Check, BarChart3 } from 'lucide-react';
 import DatePicker from 'react-datepicker';
@@ -20,6 +20,8 @@ export default function MatchLog({
   resolveTeam = null,
 }) {
   const [statsModalMatch, setStatsModalMatch] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const {
     h2hPlayer1,
     setH2hPlayer1,
@@ -35,6 +37,16 @@ export default function MatchLog({
   } = filters;
 
   const hasActiveFilters = h2hPlayer1 || h2hPlayer2 || filterTeamId || filterDateFrom || filterDateTo;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [h2hPlayer1, h2hPlayer2, filterTeamId, filterDateFrom, filterDateTo]);
+
+  const totalPages = Math.ceil(filteredMatches.length / ITEMS_PER_PAGE);
+  const paginatedMatches = filteredMatches.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const teamLookup = (id) => {
     if (resolveTeam) return resolveTeam(id);
@@ -261,7 +273,7 @@ export default function MatchLog({
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredMatches.map((match) => {
+            {paginatedMatches.map((match) => {
               const team1 = teamLookup(match.equipo_1_id);
               const team2 = teamLookup(match.equipo_2_id);
 
@@ -379,6 +391,28 @@ export default function MatchLog({
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-4">
+            <button
+              onClick={() => setCurrentPage(p => p - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              ← Anterior
+            </button>
+            <span className="text-xs text-zinc-400 font-medium">
+              Página {currentPage} de {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => p + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              Siguiente →
+            </button>
           </div>
         )}
       </div>
