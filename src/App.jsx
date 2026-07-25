@@ -95,7 +95,7 @@ export default function App() {
           </div>
 
           {/* Tabs de navegación */}
-          <nav className="flex items-center gap-1.5 w-full sm:w-auto order-last sm:order-none justify-center sm:justify-start">
+          <nav className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto order-last sm:order-none justify-center sm:justify-start">
             <Link
               to="/"
               className={`text-sm sm:text-xs font-semibold px-4 sm:px-3 py-2 sm:py-1.5 rounded-lg transition ${
