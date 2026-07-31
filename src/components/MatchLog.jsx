@@ -1,16 +1,18 @@
 import { useRef, useState, useEffect } from 'react';
 import { teams as defaultTeams, getTeamById as defaultGetTeamById } from '../data/teams';
-import { Calendar, Trash2, Users, Shield, RotateCcw, AlertCircle, Download, Check, BarChart3 } from 'lucide-react';
+import { Calendar, Trash2, Users, Shield, RotateCcw, AlertCircle, Download, Check, BarChart3, Pencil } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toPng } from 'html-to-image';
 import MatchStatsModal from './MatchStatsModal';
+import MatchEditModal from './MatchEditModal';
 export default function MatchLog({ 
   filteredMatches, 
   filters, 
   onDeleteMatch,
+  onUpdateMatch,
   loading,
   error,
   readOnly = false,
@@ -20,6 +22,7 @@ export default function MatchLog({
   resolveTeam = null,
 }) {
   const [statsModalMatch, setStatsModalMatch] = useState(null);
+  const [editModalMatch, setEditModalMatch] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
   const {
@@ -377,19 +380,30 @@ export default function MatchLog({
                     </div>
                   )}
 
-                  {/* Botón de eliminar (visible en mobile, hover en desktop) */}
+                  {/* Botones de editar/eliminar (visible en mobile, hover en desktop) */}
                   {!readOnly && (
-                    <button
-                      onClick={() => {
-                        if (confirm('¿Estás seguro de que quieres eliminar este partido?')) {
-                          onDeleteMatch(match.id);
-                        }
-                      }}
-                      className="absolute top-2 right-2 p-2 sm:p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200"
-                      title="Eliminar partido"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="absolute top-2 right-2 flex items-center gap-1">
+                      {onUpdateMatch && (
+                        <button
+                          onClick={() => setEditModalMatch(match)}
+                          className="p-2 sm:p-1.5 rounded-lg text-zinc-500 hover:text-yellow-400 hover:bg-yellow-500/10 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200"
+                          title="Editar participantes"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (confirm('¿Estás seguro de que quieres eliminar este partido?')) {
+                            onDeleteMatch(match.id);
+                          }
+                        }}
+                        className="p-2 sm:p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200"
+                        title="Eliminar partido"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
               );
@@ -426,6 +440,16 @@ export default function MatchLog({
           stats={getStatsForMatch?.(statsModalMatch)}
           onClose={() => setStatsModalMatch(null)}
           resolveTeam={teamLookup}
+        />
+      )}
+
+      {editModalMatch && (
+        <MatchEditModal
+          match={editModalMatch}
+          players={players}
+          teamsList={teamsList}
+          onClose={() => setEditModalMatch(null)}
+          onSave={onUpdateMatch}
         />
       )}
     </div>

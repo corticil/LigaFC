@@ -76,6 +76,44 @@ export function useMatches() {
     }
   };
 
+  const updateMatch = async (id, updates) => {
+    try {
+      setError(null);
+      const { error: updateError } = await supabase
+        .from('partidos_v2')
+        .update({
+          jugador_1: updates.jugador_1.trim(),
+          jugador_2: updates.jugador_2.trim(),
+          jugador_1_id: updates.jugador_1_id || null,
+          jugador_2_id: updates.jugador_2_id || null,
+          equipo_1_id: updates.equipo_1_id || null,
+          equipo_2_id: updates.equipo_2_id || null,
+        })
+        .eq('id', id);
+
+      if (updateError) throw updateError;
+
+      setMatches(prev => prev.map(m =>
+        m.id === id
+          ? {
+              ...m,
+              jugador_1: updates.jugador_1.trim(),
+              jugador_2: updates.jugador_2.trim(),
+              jugador_1_id: updates.jugador_1_id || null,
+              jugador_2_id: updates.jugador_2_id || null,
+              equipo_1_id: updates.equipo_1_id || null,
+              equipo_2_id: updates.equipo_2_id || null,
+            }
+          : m
+      ));
+      return { success: true };
+    } catch (err) {
+      console.error('Error al actualizar el partido:', err);
+      setError(err.message || 'Error al actualizar el partido');
+      return { success: false, error: err.message };
+    }
+  };
+
   const deleteMatch = async (id) => {
     try {
       setError(null);
@@ -249,6 +287,7 @@ export function useMatches() {
     error,
     refresh: fetchMatches,
     addMatch,
+    updateMatch,
     deleteMatch,
     filters: {
       h2hPlayer1,

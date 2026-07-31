@@ -11,6 +11,7 @@ import { useMatchStats } from '../hooks/useMatchStats';
 export default function AdminView({ 
   addMatch,
   deleteMatch,
+  updateMatch,
   filters,
   filteredMatches,
   allMatches,
@@ -156,6 +157,7 @@ export default function AdminView({
               filteredMatches={filteredMatches}
               filters={filters}
               onDeleteMatch={deleteMatch}
+              onUpdateMatch={updateMatch}
               loading={false}
               error={null}
               readOnly={false}

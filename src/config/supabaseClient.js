@@ -41,29 +41,33 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
       const chain = {
         _filters: [...(filters._filters || [])],
         _orders: [...(filters._orders || [])],
+        _updates: filters._updates || null,
         is(field, value) {
-          const newFilters = { _filters: [...this._filters, { field, type: 'is_null', value }], _orders: this._orders };
+          const newFilters = { _filters: [...this._filters, { field, type: 'is_null', value }], _orders: this._orders, _updates: this._updates };
           return buildChain(newFilters);
         },
         order(column, opts = {}) {
           const newOrders = [...this._orders, { column, ascending: opts.ascending !== false }];
-          const newFilters = { _filters: this._filters, _orders: newOrders };
+          const newFilters = { _filters: this._filters, _orders: newOrders, _updates: this._updates };
           return buildChain(newFilters);
         },
         update(updates) {
-          const data = get();
-          const updated = data.map(item => {
-            const matches = this._filters.every(f => {
-              if (f.type === 'eq') return item[f.field] === f.value;
-              return true;
-            });
-            return matches ? { ...item, ...updates } : item;
-          });
-          save(updated);
-          return Promise.resolve({ data: null, error: null });
+          const newFilters = { _filters: this._filters, _orders: this._orders, _updates: updates };
+          return buildChain(newFilters);
         },
         then(fn) {
           let data = get();
+          if (this._updates) {
+            data = data.map(item => {
+              const matches = this._filters.every(f => {
+                if (f.type === 'is_null') return item[f.field] === null || item[f.field] === undefined;
+                if (f.type === 'eq') return item[f.field] === f.value;
+                return true;
+              });
+              return matches ? { ...item, ...this._updates } : item;
+            });
+            save(data);
+          }
           this._filters.forEach(f => {
             if (f.type === 'is_null') data = data.filter(item => item[f.field] === null || item[f.field] === undefined);
             if (f.type === 'eq') data = data.filter(item => item[f.field] === f.value);
@@ -81,7 +85,7 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
           return Promise.resolve({ data, error: null }).then(fn);
         },
         eq(field, value) {
-          const newFilters = { _filters: [...this._filters, { field, type: 'eq', value }], _orders: this._orders };
+          const newFilters = { _filters: [...this._filters, { field, type: 'eq', value }], _orders: this._orders, _updates: this._updates };
           return buildChain(newFilters);
         }
       };

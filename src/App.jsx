@@ -27,6 +27,7 @@ export default function App() {
     loading,
     error,
     addMatch,
+    updateMatch,
     deleteMatch,
     filters,
     stats
@@ -276,6 +277,7 @@ ALTER TABLE partidos ENABLE ROW LEVEL SECURITY;`}
             isAuthenticated ? (
               <AdminView 
                 addMatch={addMatch}
+                updateMatch={updateMatch}
                 deleteMatch={deleteMatch}
                 filters={filters}
                 filteredMatches={filteredMatches}
