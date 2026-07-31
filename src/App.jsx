@@ -44,6 +44,7 @@ export default function App() {
     teamsList,
     teamsNormalized,
     addTeam,
+    updateTeam,
     deleteTeam,
     getTeamById,
   } = useTeams();
@@ -297,6 +298,7 @@ ALTER TABLE partidos ENABLE ROW LEVEL SECURITY;`}
                 onDeletePlayer={deletePlayer}
                 teamsList={teamsList}
                 onAddTeam={addTeam}
+                onUpdateTeam={updateTeam}
                 onDeleteTeam={deleteTeam}
                 tournamentPlayers={tournamentPlayers}
               />

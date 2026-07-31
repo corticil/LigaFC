@@ -30,6 +30,7 @@ export default function AdminView({
   onDeletePlayer,
   teamsList,
   onAddTeam,
+  onUpdateTeam,
   onDeleteTeam,
   tournamentPlayers,
 }) {
@@ -188,6 +189,7 @@ export default function AdminView({
               <TeamManager
                 teamsList={teamsList}
                 onAddTeam={onAddTeam}
+                onUpdateTeam={onUpdateTeam}
                 onDeleteTeam={onDeleteTeam}
               />
             </div>

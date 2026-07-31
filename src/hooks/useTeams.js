@@ -93,6 +93,23 @@ export function useTeams() {
     }
   };
 
+  const updateTeam = async (id, updates) => {
+    try {
+      const { error } = await supabase
+        .from('equipos_v2')
+        .update({
+          logo_url: updates.logo_url || null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+      setTeamsList(prev => prev.map(t => t.id === id ? { ...t, logo_url: updates.logo_url || null } : t));
+      return { success: true };
+    } catch (err) {
+      console.error('Error al actualizar el equipo:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
   const deleteTeam = async (id) => {
     try {
       const { error } = await supabase.from('equipos_v2').delete().eq('id', id);
@@ -123,6 +140,7 @@ export function useTeams() {
     teamsList,
     teamsNormalized,
     addTeam,
+    updateTeam,
     deleteTeam,
     getTeamById,
     loading,

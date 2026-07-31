@@ -303,6 +303,15 @@ if (supabaseUrl && supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey && sup
           then: (fn) => Promise.resolve({ data: newRows, error: null }).then(fn)
         };
       },
+
+      update: (updates) => ({
+        eq: (field, value) => {
+          const updated = get().map(item => item[field] === value ? { ...item, ...updates } : item);
+          save(updated);
+          return Promise.resolve({ data: null, error: null });
+        }
+      }),
+
       delete: () => ({
         eq: (field, value) => {
           if (field === 'id') {

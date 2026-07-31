@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Shield, Plus, Trash2, Upload } from 'lucide-react';
+import { Shield, Plus, Trash2, Upload, Pencil } from 'lucide-react';
 import { getTeamById as getHardcodedTeam } from '../data/teams';
 
 function compressAndConvertToBase64(file, maxSize = 128) {
@@ -30,7 +30,7 @@ function compressAndConvertToBase64(file, maxSize = 128) {
   });
 }
 
-export default function TeamManager({ teamsList, onAddTeam, onDeleteTeam }) {
+export default function TeamManager({ teamsList, onAddTeam, onDeleteTeam, onUpdateTeam }) {
   const [showForm, setShowForm] = useState(false);
   const [newName, setNewName] = useState('');
   const [logoPreview, setLogoPreview] = useState(null);
@@ -38,6 +38,12 @@ export default function TeamManager({ teamsList, onAddTeam, onDeleteTeam }) {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef(null);
+
+  const [editingTeam, setEditingTeam] = useState(null);
+  const [editLogo, setEditLogo] = useState(null);
+  const [editError, setEditError] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const editFileInputRef = useRef(null);
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
@@ -83,6 +89,37 @@ export default function TeamManager({ teamsList, onAddTeam, onDeleteTeam }) {
   const handleDelete = async (id, name) => {
     if (confirm(`¿Eliminar el club "${name}"?`)) {
       await onDeleteTeam(id);
+    }
+  };
+
+  const handleEditFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setEditError('Solo se permiten archivos de imagen');
+      return;
+    }
+    try {
+      const base64 = await compressAndConvertToBase64(file);
+      setEditLogo(base64);
+      setEditError('');
+    } catch (err) {
+      setEditError(err.message);
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setEditError('');
+    setEditSubmitting(true);
+    const result = await onUpdateTeam(editingTeam.id, { logo_url: editLogo });
+    setEditSubmitting(false);
+    if (result.success) {
+      setEditingTeam(null);
+      setEditLogo(null);
+      if (editFileInputRef.current) editFileInputRef.current.value = '';
+    } else {
+      setEditError(result.error);
     }
   };
 
@@ -201,6 +238,75 @@ export default function TeamManager({ teamsList, onAddTeam, onDeleteTeam }) {
         ) : (
           teamsList.map((team) => {
             const logo = getLogo(team);
+            if (editingTeam?.id === team.id) {
+              return (
+                <form key={team.id} onSubmit={handleEditSubmit} className="col-span-1 sm:col-span-2 px-4 py-4 bg-zinc-950/40 space-y-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {editLogo ? (
+                      <img src={editLogo} alt={team.nombre} className="w-10 h-10 object-contain rounded-lg border border-zinc-800 flex-shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Shield className="w-5 h-5 text-zinc-500" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{team.nombre}</p>
+                      <p className="text-[10px] text-zinc-500">Editando escudo</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => editFileInputRef.current?.click()}
+                      className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-2 rounded-lg text-xs font-medium border border-zinc-700 transition"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {editLogo ? 'Cambiar escudo' : 'Subir escudo'}
+                    </button>
+                    {editLogo && (
+                      <button
+                        type="button"
+                        onClick={() => { setEditLogo(null); if (editFileInputRef.current) editFileInputRef.current.value = ''; }}
+                        className="text-xs text-zinc-500 hover:text-rose-400 transition"
+                      >
+                        Quitar
+                      </button>
+                    )}
+                    <input
+                      ref={editFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEditFileChange}
+                      className="hidden"
+                    />
+                  </div>
+
+                  {editError && (
+                    <div className="text-xs text-rose-400 bg-rose-500/10 rounded-lg px-3 py-2">
+                      {editError}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setEditingTeam(null); setEditLogo(null); setEditError(''); if (editFileInputRef.current) editFileInputRef.current.value = ''; }}
+                      className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white transition"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={editSubmitting}
+                      className="flex items-center gap-1.5 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-zinc-950 px-4 py-1.5 rounded-lg text-xs font-bold transition"
+                    >
+                      {editSubmitting ? 'Guardando...' : 'Guardar'}
+                    </button>
+                  </div>
+                </form>
+              );
+            }
             return (
               <div key={team.id} className="flex items-center justify-between px-4 py-3 hover:bg-zinc-800/20 transition">
                 <div className="flex items-center gap-3 min-w-0">
@@ -216,13 +322,22 @@ export default function TeamManager({ teamsList, onAddTeam, onDeleteTeam }) {
                     <span className="text-[10px] text-zinc-600">{team.slug || team.id}</span>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDelete(team.id, team.nombre)}
-                  className="p-2 text-zinc-600 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition flex-shrink-0"
-                  title={`Eliminar ${team.nombre}`}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center flex-shrink-0">
+                  <button
+                    onClick={() => { setEditingTeam(team); setEditLogo(team.logo_url || null); setEditError(''); }}
+                    className="p-2 text-zinc-600 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition"
+                    title={`Editar logo de ${team.nombre}`}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(team.id, team.nombre)}
+                    className="p-2 text-zinc-600 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                    title={`Eliminar ${team.nombre}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             );
           })
