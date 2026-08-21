@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PlusCircle, Trophy, Sparkles, Trash2, Users } from 'lucide-react';
+import { PlusCircle, Trophy, Sparkles, ClipboardList, Users } from 'lucide-react';
 import MatchForm from '../components/MatchForm';
 import TournamentManager from '../components/TournamentManager';
 import StatsUploader from '../components/StatsUploader';
@@ -35,13 +35,14 @@ export default function AdminView({
   tournamentPlayers,
 }) {
   const [activeTab, setActiveTab] = useState('registrar');
+  const [modoRegistro, setModoRegistro] = useState('ia');
   const { getStatsForMatch } = useMatchStats();
 
   return (
     <div className="space-y-6 sm:space-y-8">
 
       {/* Pestañas de Navegación */}
-      <div className="grid grid-cols-3 sm:flex border-b border-zinc-900 max-w-lg mx-auto bg-zinc-900/20 p-1 rounded-xl gap-1">
+      <div className="grid grid-cols-2 sm:flex border-b border-zinc-900 max-w-lg mx-auto bg-zinc-900/20 p-1 rounded-xl gap-1">
         <button
           onClick={() => setActiveTab('registrar')}
           className={`py-2.5 px-3 rounded-lg text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
@@ -54,15 +55,15 @@ export default function AdminView({
           Registrar
         </button>
         <button
-          onClick={() => setActiveTab('stats-ai')}
+          onClick={() => setActiveTab('partidos')}
           className={`py-2.5 px-3 rounded-lg text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-            activeTab === 'stats-ai'
-              ? 'bg-purple-500 text-purple-950 shadow-md shadow-purple-500/10'
+            activeTab === 'partidos'
+              ? 'bg-rose-500 text-rose-950 shadow-md shadow-rose-500/10'
               : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          Stats AI
+          <ClipboardList className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          Partidos
         </button>
         <button
           onClick={() => setActiveTab('torneos')}
@@ -74,17 +75,6 @@ export default function AdminView({
         >
           <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           Torneos
-        </button>
-        <button
-          onClick={() => setActiveTab('gestionar')}
-          className={`py-2.5 px-3 rounded-lg text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-            activeTab === 'gestionar'
-              ? 'bg-rose-500 text-rose-950 shadow-md shadow-rose-500/10'
-              : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
-          }`}
-        >
-          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          Gestionar
         </button>
         <button
           onClick={() => setActiveTab('data')}
@@ -103,29 +93,58 @@ export default function AdminView({
       <div className="transition-all duration-300">
         {activeTab === 'registrar' && (
           <section className="max-w-2xl mx-auto py-4">
-            <MatchForm 
-              onAddMatch={addMatch} 
-              tournaments={tournaments}
-              players={players}
-              teamsList={teamsList.map(t => ({ id: t.id || t.slug, name: t.nombre, logoUrl: t.logo_url }))}
-              onSuccess={() => {
-                filters.clearFilters();
-              }} 
-            />
-          </section>
-        )}
-        {activeTab === 'stats-ai' && (
-          <section className="max-w-xl mx-auto py-4">
-            <div className="text-center mb-6">
-              <h2 className="text-lg font-bold text-white flex items-center justify-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-400" />
-                Importar Stats con IA
-              </h2>
-              <p className="text-xs text-zinc-500 mt-1">
-                Subí una captura de pantalla de estadísticas de FC para extraer y guardar los datos automáticamente
-              </p>
+            {/* Switch de modo de registro */}
+            <div className="flex items-center justify-center gap-1 bg-zinc-900/40 border border-zinc-800 rounded-xl p-1 w-fit mx-auto mb-6">
+              <button
+                onClick={() => setModoRegistro('ia')}
+                className={`py-2 px-4 rounded-lg text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  modoRegistro === 'ia'
+                    ? 'bg-purple-500 text-purple-950 shadow-md shadow-purple-500/10'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Stats IA
+              </button>
+              <button
+                onClick={() => setModoRegistro('manual')}
+                className={`py-2 px-4 rounded-lg text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  modoRegistro === 'manual'
+                    ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/10'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
+                }`}
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                Manual
+              </button>
             </div>
-            <StatsUploader onAddMatch={addMatch} tournaments={tournaments} players={players} teamsList={teamsList.map(t => ({ id: t.id || t.slug, name: t.nombre, logoUrl: t.logo_url }))} />
+
+            {/* Modo Stats IA */}
+            <div className={modoRegistro === 'ia' ? 'max-w-xl mx-auto' : 'hidden'}>
+              <div className="text-center mb-6">
+                <h2 className="text-lg font-bold text-white flex items-center justify-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                  Importar Stats con IA
+                </h2>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Subí una captura de pantalla de estadísticas de FC para extraer y guardar los datos automáticamente
+                </p>
+              </div>
+              <StatsUploader onAddMatch={addMatch} tournaments={tournaments} players={players} teamsList={teamsList.map(t => ({ id: t.id || t.slug, name: t.nombre, logoUrl: t.logo_url }))} />
+            </div>
+
+            {/* Modo Manual */}
+            <div className={modoRegistro === 'manual' ? '' : 'hidden'}>
+              <MatchForm
+                onAddMatch={addMatch}
+                tournaments={tournaments}
+                players={players}
+                teamsList={teamsList.map(t => ({ id: t.id || t.slug, name: t.nombre, logoUrl: t.logo_url }))}
+                onSuccess={() => {
+                  filters.clearFilters();
+                }}
+              />
+            </div>
           </section>
         )}
         {activeTab === 'torneos' && (
@@ -143,15 +162,15 @@ export default function AdminView({
             tournamentPlayers={tournamentPlayers}
           />
         )}
-        {activeTab === 'gestionar' && (
+        {activeTab === 'partidos' && (
           <section className="max-w-2xl mx-auto py-4">
             <div className="text-center mb-6">
               <h2 className="text-lg font-bold text-white flex items-center justify-center gap-2">
-                <Trash2 className="w-5 h-5 text-rose-400" />
-                Gestionar Partidos
+                <ClipboardList className="w-5 h-5 text-rose-400" />
+                Administrar Partidos
               </h2>
               <p className="text-xs text-zinc-500 mt-1">
-                Elimina partidos y estadísticas. Se pueden restaurar desde la base de datos.
+                Editá los participantes o eliminá partidos y estadísticas. Se pueden restaurar desde la base de datos.
               </p>
             </div>
             <MatchLog
