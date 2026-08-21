@@ -13,17 +13,59 @@ export const GEMINI_MODELS = {
 
 /**
  * Comprime una imagen a WebP con resolución máxima de 1200px
+ * Camino principal usa createImageBitmap con decodificación escalada para evitar
+ * quedarse sin memoria con fotos de cámara de alta resolución (ej. 50MP+)
  * @param {File} file - Archivo de imagen original
- * @param {number} maxDimension - Ancho/alto máximo (default 1200)
- * @param {number} quality - Calidad 0-1 (default 0.5)
+ * @param {number} maxDimension - Ancho/alto máximo (default 800)
+ * @param {number} quality - Calidad 0-1 (default 0.4)
  * @returns {Promise<Blob>} Blob con la imagen comprimida
  */
-export function compressImage(file, maxDimension = 800, quality = 0.4) {
-  return new Promise((resolve, reject) => {
-    if (file.size > 10 * 1024 * 1024) {
-      reject(new Error('La imagen es demasiado grande. Intentá con una de menor resolución.'));
-      return;
+export async function compressImage(file, maxDimension = 800, quality = 0.4) {
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error('La imagen es demasiado grande. Intentá con una de menor resolución.');
+  }
+
+  // Decodificación escalada: el navegador reduce la imagen durante la decodificación,
+  // sin materializar nunca el bitmap completo en RAM
+  if (typeof createImageBitmap === 'function') {
+    let bmp = null;
+    try {
+      // Solo una dimensión => la otra se calcula preservando el aspecto
+      bmp = await createImageBitmap(file, {
+        resizeWidth: maxDimension,
+        imageOrientation: 'from-image',
+      });
+
+      // Retrato: normalizar el lado largo (ya está en RAM chica, reescalar es barato)
+      if (bmp.height > bmp.width && bmp.height > maxDimension) {
+        const resized = await createImageBitmap(bmp, { resizeHeight: maxDimension });
+        bmp.close();
+        bmp = resized;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = bmp.width;
+      canvas.height = bmp.height;
+      canvas.getContext('2d').drawImage(bmp, 0, 0);
+      bmp.close();
+      bmp = null;
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (b) => (b ? resolve(b) : reject(new Error('No se pudo comprimir la imagen'))),
+          'image/webp',
+          quality
+        );
+      });
+      return blob;
+    } catch (err) {
+      devLog('[compressImage] createImageBitmap no disponible o falló, usando fallback:', err);
+      if (bmp) bmp.close();
     }
+  }
+
+  // Fallback: Image + canvas (mismo comportamiento que antes, con limpieza explícita)
+  return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
@@ -39,11 +81,13 @@ export function compressImage(file, maxDimension = 800, quality = 0.4) {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
+        img.src = ''; // liberar el caché de decodificación del navegador
         canvas.toBlob((blob) => {
           if (blob) resolve(blob);
           else reject(new Error('No se pudo comprimir la imagen'));
         }, 'image/webp', quality);
       } catch (e) {
+        img.src = '';
         reject(new Error('No hay memoria suficiente para procesar esta imagen. Tomá la foto de nuevo con menor resolución.'));
       }
     };
@@ -535,7 +579,9 @@ function matchStatLabel(text) {
 function preprocessImageForOcr(imageBlob) {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    const objectUrl = URL.createObjectURL(imageBlob);
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
       const scale = 1.5;
       const w = Math.round(img.width * scale);
       const h = Math.round(img.height * scale);
@@ -585,8 +631,11 @@ function preprocessImageForOcr(imageBlob) {
         else reject(new Error('No se pudo generar el blob pre-procesado'));
       }, 'image/png');
     };
-    img.onerror = () => reject(new Error('Error al cargar imagen para pre-procesado'));
-    img.src = URL.createObjectURL(imageBlob);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Error al cargar imagen para pre-procesado'));
+    };
+    img.src = objectUrl;
   });
 }
 
@@ -648,7 +697,9 @@ function loadOcrZones() {
 function loadImageToCanvas(imageBlob) {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    const objectUrl = URL.createObjectURL(imageBlob);
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
       canvas.height = img.height;
@@ -656,8 +707,11 @@ function loadImageToCanvas(imageBlob) {
       ctx.drawImage(img, 0, 0);
       resolve({ canvas, ctx, width: img.width, height: img.height });
     };
-    img.onerror = () => reject(new Error('Error al cargar imagen'));
-    img.src = URL.createObjectURL(imageBlob);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Error al cargar imagen'));
+    };
+    img.src = objectUrl;
   });
 }
 
