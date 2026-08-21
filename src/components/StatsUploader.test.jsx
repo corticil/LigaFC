@@ -26,15 +26,15 @@ describe('StatsUploader', () => {
     expect(screen.getByText('Tomar Foto')).toBeInTheDocument();
   });
 
-  it('shows confirmation step after parsedData is set', () => {
-    const { rerender } = render(
+  it('renders upload view when no image has been processed', () => {
+    render(
       <MemoryRouter>
         <StatsUploader onAddMatch={() => {}} tournaments={[]} />
       </MemoryRouter>
     );
 
-    // Override the step to 'confirm' by re-rendering with initial state
-    // Since we can't easily set internal state, we just verify the upload view
-    expect(screen.getByText('o')).toBeInTheDocument();
+    // No se puede setear el estado interno fácilmente; verificamos la vista de upload
+    expect(screen.getByText('Arrastra una imagen aquí')).toBeInTheDocument();
+    expect(screen.getByText('o haz clic para seleccionar un archivo')).toBeInTheDocument();
   });
 });

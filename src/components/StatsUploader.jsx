@@ -48,14 +48,21 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
   const [nota, setNota] = useState('');
   const [geminiModel, setGeminiModel] = useState(GEMINI_MODELS.flashLite);
 
-  // Maneja la subida de imagen: comprime y genera preview inmediata
-  const handleFile = useCallback(async (file) => {
-    if (!file || !file.type.startsWith('image/')) return;
+  // Libera por completo el estado ligado a la imagen actual
+  const clearImageState = useCallback(() => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setImage(null);
+    setPreviewUrl(null);
     setStatus('idle');
     setParsedData(null);
     setErrorMsg('');
     setStep('upload');
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  // Maneja la subida de imagen: comprime y genera preview inmediata
+  const handleFile = useCallback(async (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    clearImageState();
     try {
       const blob = await compressImage(file);
       const compressedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp' });
@@ -65,7 +72,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
       setErrorMsg(err.message || 'No se pudo procesar la imagen. Intentá con una foto de menor resolución.');
       setStatus('error');
     }
-  }, [previewUrl]);
+  }, [clearImageState]);
 
   // Drag & drop
   const handleDrop = useCallback((e) => {
@@ -74,7 +81,9 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
   }, [handleFile]);
 
   const handleSelect = useCallback((e) => {
-    handleFile(e.target.files[0]);
+    const file = e.target.files[0];
+    e.target.value = '';
+    handleFile(file);
   }, [handleFile]);
 
   // Procesa la imagen: Gemini (IA) u OCR (Tesseract.js)
@@ -134,17 +143,11 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
   }, [parsedData, jugador1, jugador2, jugador1Id, jugador2Id, team1Id, team2Id, nota, fecha, torneoId, onAddMatch, navigate]);
 
   const reset = useCallback(() => {
-    setImage(null);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(null);
-    setStatus('idle');
-    setParsedData(null);
-    setErrorMsg('');
-    setStep('upload');
+    clearImageState();
     setTorneoId('');
     setNota('');
     setFecha(new Date().toISOString().split('T')[0]);
-  }, [previewUrl]);
+  }, [clearImageState]);
 
   const localName = parsedData?.nombre_local || '';
   const visitName = parsedData?.nombre_visitante || '';
@@ -352,7 +355,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
       {!previewUrl && (
         <div className="space-y-3">
           {/* Drag & drop zone — desktop only */}
-          <div onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onClick={() => inputRef.current?.click()}
+          <div onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onClick={() => { clearImageState(); inputRef.current?.click(); }}
             className="relative cursor-pointer group">
             <div className="border-2 border-dashed border-zinc-700 hover:border-emerald-500/50 bg-zinc-900/30 hover:bg-zinc-900/60 rounded-2xl p-8 sm:p-12 transition-all duration-300 flex flex-col items-center justify-center gap-4">
               <div className="p-4 bg-zinc-800/50 rounded-full group-hover:bg-emerald-500/10 group-hover:scale-110 transition-all duration-300">
@@ -368,7 +371,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
           </div>
 
           {/* Camera button — always visible */}
-          <button onClick={() => cameraRef.current?.click()}
+          <button onClick={() => { clearImageState(); cameraRef.current?.click(); }}
             className="w-full py-3 rounded-xl text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition flex items-center justify-center gap-2 border border-zinc-700 hover:border-zinc-600">
             <Camera className="w-4 h-4" />
             Tomar Foto
