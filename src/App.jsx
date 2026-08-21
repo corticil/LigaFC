@@ -11,6 +11,7 @@ import AdminView from './pages/AdminView';
 import JugadoresView from './pages/JugadoresView';
 import { supabase, isLocalStorageMock } from './config/supabaseClient';
 import useAnalytics from './hooks/useAnalytics';
+import { APP_VERSION, BUILD_DATE } from './version';
 import { Database, Code, ChevronDown, ChevronUp, LogOut, LogIn, User, Lock, Trophy } from 'lucide-react';
 
 export default function App() {
@@ -324,6 +325,9 @@ ALTER TABLE partidos ENABLE ROW LEVEL SECURITY;`}
       <footer className="border-t border-zinc-900 bg-zinc-950/80 py-6 mt-12 text-center">
         <p className="text-xs text-zinc-600">
           LigaFC Bitácora © 2026. Todos los derechos reservados. Desarrollado con React, Tailwind CSS y Supabase.
+        </p>
+        <p className="text-[10px] text-zinc-700 font-mono mt-1.5" title="Versión de la aplicación y fecha de build">
+          v{APP_VERSION}{BUILD_DATE ? ` · ${BUILD_DATE}` : ''}
         </p>
       </footer>
     </div>

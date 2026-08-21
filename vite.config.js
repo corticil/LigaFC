@@ -2,6 +2,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import pkg from './package.json'
 
 export default defineConfig(({ mode }) => {
   // Carga las variables de entorno incluyendo GEMINI_API_KEY
@@ -9,6 +10,11 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
+    // Constantes inyectadas al bundle: versión del package.json y fecha de compilación
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+      __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+    },
     plugins: [
       react(),
       tailwindcss(),
