@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { useMatches } from './hooks/useMatches';
 import { useTournaments } from './hooks/useTournaments';
 import { usePlayers } from './hooks/usePlayers';
 import { useTeams } from './hooks/useTeams';
 import Login from './components/Login';
-import TournamentManager from './components/TournamentManager';
 import PublicView from './pages/PublicView';
-import AdminView from './pages/AdminView';
-import JugadoresView from './pages/JugadoresView';
 import { supabase, isLocalStorageMock } from './config/supabaseClient';
 import useAnalytics from './hooks/useAnalytics';
 import { APP_VERSION, BUILD_DATE } from './version';
 import { Database, Code, ChevronDown, ChevronUp, LogOut, LogIn, User, Lock, Trophy } from 'lucide-react';
+
+const TournamentManager = lazy(() => import('./components/TournamentManager'));
+const AdminView = lazy(() => import('./pages/AdminView'));
+const JugadoresView = lazy(() => import('./pages/JugadoresView'));
 
 export default function App() {
   const location = useLocation();
@@ -246,6 +247,11 @@ ALTER TABLE partidos ENABLE ROW LEVEL SECURITY;`}
           </div>
         )}
 
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-24">
+            <div className="w-8 h-8 border-4 border-zinc-700 border-t-emerald-500 rounded-full animate-spin" />
+          </div>
+        }>
         <Routes>
           <Route path="/" element={
             <PublicView 
@@ -319,6 +325,7 @@ ALTER TABLE partidos ENABLE ROW LEVEL SECURITY;`}
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </main>
 
       {/* Pie de Página */}

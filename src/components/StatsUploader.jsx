@@ -86,7 +86,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
     handleFile(file);
   }, [handleFile]);
 
-  // Procesa la imagen: Gemini (IA) u OCR (Tesseract.js)
+  // Procesa la imagen con Gemini (IA)
   const handleProcess = useCallback(async () => {
     if (!image) return;
     setStatus('loading');

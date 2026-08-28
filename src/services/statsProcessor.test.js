@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { extractStatsFromImage, saveStatsToSupabase, parseOcrText, GEMINI_MODELS } from './statsProcessor';
+import { extractStatsFromImage, saveStatsToSupabase, GEMINI_MODELS } from './statsProcessor';
 import { supabase } from '../config/supabaseClient';
 
 describe('extractStatsFromImage', () => {
@@ -174,83 +174,3 @@ describe('saveStatsToSupabase', () => {
   });
 });
 
-describe('parseOcrText', () => {
-  it('extracts teams, score and time from match header', () => {
-    const text = `Real Madrid
-2 - 1
-Barcelona
-90:00`;
-    const result = parseOcrText(text);
-    expect(result.nombre_local).toBe('Real Madrid');
-    expect(result.nombre_visitante).toBe('FC Barcelona');
-    expect(result.goles_local).toBe(2);
-    expect(result.goles_visitante).toBe(1);
-    expect(result.tiempo_partido).toBe('90:00');
-  });
-
-  it('extracts stats table rows', () => {
-    const text = `Local Visitante
-Posesión 55 45
-Tiros 12 8`;
-    const result = parseOcrText(text);
-    expect(result.estadisticas_tabla.Posesión).toEqual({ local: '55', visitante: '45' });
-    expect(result.estadisticas_tabla.Tiros).toEqual({ local: '12', visitante: '8' });
-  });
-
-  it('handles score with different dash formats', () => {
-    const text = `Equipo A
-3–0
-Equipo B`;
-    const result = parseOcrText(text);
-    expect(result.goles_local).toBe(3);
-    expect(result.goles_visitante).toBe(0);
-  });
-
-  it('returns defaults when no data found', () => {
-    const result = parseOcrText('12345 !@#$%');
-    expect(result.nombre_local).toBe('');
-    expect(result.goles_local).toBe(0);
-    expect(result.estadisticas_tabla).toEqual({});
-  });
-
-  it('extracts team names from alpha lines when no score found', () => {
-    const text = `Real Madrid CF
-FC Barcelona
-Partido amistoso`;
-    const result = parseOcrText(text);
-    expect(result.nombre_local).toBe('Real Madrid');
-    expect(result.nombre_visitante).toBe('FC Barcelona');
-  });
-
-  it('parses real OCR output with messy formatting', () => {
-    const text = `ATLÉTICO DE MADRID il 2:4 Hh om
-91:33 —
-M9 Resumen Posesión Tiros Pases Defensa Eventos a
-37 % de posesión es] TT
-95% | li Recuperación de balón (seg.). 7 ] 93%
-5 Tiros 1]
-137 Pases 229]
-= Ei Entradas 1 —
-. I La] Entradas con éxito 1 J Ea
-80% | : \\ 73%
-70 E 70
-(50%) 7 Recuperaciones 18
-= la Atajadas 2 =
-PRECISIÓN EN TIROS PRECISION EN TIROS
-| 2 Faltas cometidas 0
-= 1 Fueras de lugar 1
-: ; [+] Tiros de esquina 1]
-84 % 1 Tires libres 3] 96%
-i o Penales 0 E
-PRECISIÓN DE PASES I2 Tarjetas amarillas o | PRECISION DE PASES`;
-
-    const result = parseOcrText(text);
-    expect(result.goles_local).toBe(2);
-    expect(result.goles_visitante).toBe(4);
-    expect(result.nombre_local).toBe('Atlético de Madrid');
-    expect(result.estadisticas_tabla.Tiros).toBeDefined();
-    expect(result.estadisticas_tabla.Pases).toBeDefined();
-    expect(result.estadisticas_tabla['Recuperación de balón']).toBeDefined();
-    expect(result.estadisticas_tabla['Faltas cometidas']).toBeDefined();
-  });
-});
