@@ -42,12 +42,17 @@ export function useMatches() {
   const addMatch = async (matchData) => {
     try {
       setError(null);
+      const j1 = (matchData.jugador_1 || '').trim();
+      const j2 = (matchData.jugador_2 || '').trim();
+      if (!j1 && !j2) {
+        return { success: false, error: 'Faltan los jugadores del partido' };
+      }
       const { data, error: insertError } = await supabase
         .from('partidos_v2')
         .insert([
           {
-            jugador_1: matchData.jugador_1.trim(),
-            jugador_2: matchData.jugador_2.trim(),
+            jugador_1: j1,
+            jugador_2: j2,
             jugador_1_id: matchData.jugador_1_id || null,
             jugador_2_id: matchData.jugador_2_id || null,
             equipo_1_id: matchData.equipo_1_id || null,

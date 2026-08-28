@@ -25,6 +25,7 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], pla
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setValidationError('');
 
     if (jugador1 === jugador2) {

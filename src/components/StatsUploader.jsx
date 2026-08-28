@@ -109,6 +109,19 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
   // Guarda el partido + estadísticas en DB y redirige al home
   const handleConfirm = useCallback(async () => {
     if (!parsedData) return;
+    if (status === 'saving') return;
+
+    if (!jugador1 || !jugador2) {
+      setErrorMsg('Seleccioná ambos jugadores.');
+      setStatus('error');
+      return;
+    }
+    if (jugador1 === jugador2) {
+      setErrorMsg('Un jugador no puede jugar contra sí mismo.');
+      setStatus('error');
+      return;
+    }
+
     setStatus('saving');
     setErrorMsg('');
 
@@ -140,7 +153,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
       setErrorMsg(err.message || 'Error al guardar');
       setStatus('error');
     }
-  }, [parsedData, jugador1, jugador2, jugador1Id, jugador2Id, team1Id, team2Id, nota, fecha, torneoId, onAddMatch, navigate]);
+  }, [parsedData, jugador1, jugador2, jugador1Id, jugador2Id, team1Id, team2Id, nota, fecha, torneoId, onAddMatch, navigate, status]);
 
   const reset = useCallback(() => {
     clearImageState();
@@ -152,6 +165,38 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
   const localName = parsedData?.nombre_local || '';
   const visitName = parsedData?.nombre_visitante || '';
   const statsTable = parsedData?.estadisticas_tabla;
+
+  // Asigna un jugador a un lado sin permitir el mismo jugador en ambos.
+  // Si el jugador elegido ya está en el otro lado, el otro lado se reasigna
+  // al primer jugador distinto disponible (nunca queda vacío ni duplicado).
+  const selectPlayer = (side, val) => {
+    const otherSide = side === 'jugador1' ? 'jugador2' : 'jugador1';
+    const currentOther = side === 'jugador1' ? jugador2 : jugador1;
+
+    if (val === currentOther) {
+      const others = players.filter(p => (p.nombre || p) !== val);
+      if (others.length > 0) {
+        const other = others[0];
+        if (side === 'jugador1') {
+          setJugador2(other.nombre || other);
+          setJugador2Id(other.id || null);
+        } else {
+          setJugador1(other.nombre || other);
+          setJugador1Id(other.id || null);
+        }
+      }
+    }
+
+    const found = players.find(p => (p.nombre || p) === val);
+    if (side === 'jugador1') {
+      setJugador1(val);
+      setJugador1Id(found?.id || null);
+    } else {
+      setJugador2(val);
+      setJugador2Id(found?.id || null);
+    }
+  };
+
 
   if (step === 'confirm' && parsedData) {
     return (
@@ -208,17 +253,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
               <label className="block text-[10px] text-zinc-500 mb-1.5 font-medium uppercase tracking-wider flex items-center gap-1">
                 <User className="w-3 h-3" /> Jugador Local
               </label>
-              <select value={jugador1} onChange={e => {
-                const val = e.target.value;
-                setJugador1(val);
-                const found = players.find(p => (p.nombre || p) === val);
-                setJugador1Id(found?.id || null);
-                if (val === jugador2) {
-                  const other = players.find(p => (p.nombre || p) !== val);
-                  setJugador2(other?.nombre || other || '');
-                  setJugador2Id(other?.id || null);
-                }
-              }}
+              <select value={jugador1} onChange={e => selectPlayer('jugador1', e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
                 {players.map(p => {
                   const name = p.nombre || p;
@@ -231,17 +266,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
               <label className="block text-[10px] text-zinc-500 mb-1.5 font-medium uppercase tracking-wider flex items-center gap-1">
                 <User className="w-3 h-3" /> Jugador Visitante
               </label>
-              <select value={jugador2} onChange={e => {
-                const val = e.target.value;
-                setJugador2(val);
-                const found = players.find(p => (p.nombre || p) === val);
-                setJugador2Id(found?.id || null);
-                if (val === jugador1) {
-                  const other = players.find(p => (p.nombre || p) !== val);
-                  setJugador1(other?.nombre || other || '');
-                  setJugador1Id(other?.id || null);
-                }
-              }}
+              <select value={jugador2} onChange={e => selectPlayer('jugador2', e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
                 {players.map(p => {
                   const name = p.nombre || p;
