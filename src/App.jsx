@@ -20,7 +20,6 @@ export default function App() {
   const isHome = location.pathname === '/';
   const isJugadores = location.pathname === '/jugadores';
   const isTorneos = location.pathname === '/torneos';
-  const isAdmin = location.pathname === '/admin';
 
   const {
     matches,
@@ -134,7 +133,7 @@ export default function App() {
               <Link
                 to="/admin"
                 className={`text-sm sm:text-xs font-semibold px-4 sm:px-3 py-2 sm:py-1.5 rounded-lg transition ${
-                  isAdmin
+                  location.pathname === '/admin'
                     ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
                 }`}
