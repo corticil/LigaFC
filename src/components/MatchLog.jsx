@@ -91,45 +91,59 @@ const handleDownload = async () => {
         return;
       }
       
-      // 1. Guardar estilos originales SOURCE LIST para restaurar después
-      const originalSourceListStyle = sourceList.style.cssText;
-      
-      // 2. Aplicar estilos de captura SOBRE el DOM real (temporales)
-      sourceList.style.cssText = `
+      // 1. Crear wrapper offscreen con width 1080px y grid 2 columnas
+      //    Esto fuerza el ancho correcto y evita "solo se ve lo del celular"
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = `
+        position: fixed;
+        left: -9999px;
+        top: 0;
+        width: 1080px;
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 16px;
-        width: 100%;
-        max-width: 100%;
         box-sizing: border-box;
+        padding: 24px;
+        background: #09090b;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: #fafafa;
       `;
       
-      // 3. Ocultar temporalmente los botones "Ver Stats" para que no aparezcan en la captura
-      const verStatsBtns = sourceList.querySelectorAll('button.font-semibold.text-emerald-400');
+      // 2. Clonar el contenido (no mover el DOM real = sin efectos permanentes)
+      const clonedList = sourceList.cloneNode(true);
+      
+      // 3. Neutralizar margin-top de space-y-4 en los hijos del clon
+      //    El sourceList original tiene class="space-y-4" que añade margen a los children
+      const clonedItems = clonedList.querySelectorAll(':scope > *');
+      clonedItems.forEach(el => {
+        el.style.marginTop = '0';
+      });
+      
+      // 4. Ocultar botones "Ver Stats" en el clon (para que no aparezcan en la captura)
+      const verStatsBtns = clonedList.querySelectorAll('button.font-semibold.text-emerald-400');
       const originalButtonStyles = [];
       verStatsBtns.forEach(btn => {
         originalButtonStyles.push(btn.style.cssText);
         btn.style.display = 'none';
       });
       
-      // 4. Capturar con toPng (ahora sourceList tiene grid 2 columnas + width 100%)
-      const dataUrl = await toPng(sourceList, {
+      wrapper.appendChild(clonedList);
+      document.body.appendChild(wrapper);
+      
+      // 5. Esperar renderizado offscreen
+      await new Promise(r => requestAnimationFrame(r));
+      
+      // 6. Capturar con toPng (wrapper ya tiene width: 1080px y grid 2 columnas)
+      const dataUrl = await toPng(wrapper, {
         pixelRatio: 2,
         width: 1080,
         backgroundColor: '#09090b',
       });
       
-      // 5. Restaurar botones "Ver Stats"
-      verStatsBtns.forEach((btn, i) => {
-        btn.style.cssText = originalButtonStyles[i] || '';
-        btn.style.display = '';
-      });
+      // 7. Limpiar wrapper (el sourceList original nunca se modificó)
+      document.body.removeChild(wrapper);
       
-      // 6. --- MUY IMPORTANTE: Restaurar estilos originales del sourceList ---
-      // Esto evita que el historial quede permanentemente en grid 2 columnas
-      sourceList.style.cssText = originalSourceListStyle;
-      
-      // 7. Descargar
+      // 8. Descargar
       const link = document.createElement('a');
       link.href = dataUrl;
       link.download = `LigaFC_Historial.png`;
