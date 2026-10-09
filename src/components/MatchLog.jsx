@@ -85,151 +85,19 @@ const handleDownload = async () => {
     try {
       setIsDownloading(true);
       
-      const matches = paginatedMatches;
-      if (!matches.length) return;
+      const sourceList = historyRef.current;
+      if (!sourceList) {
+        console.error('No se encontró la lista de partidos para capturar');
+        return;
+      }
       
-      // Pre-cargar imágenes como data URLs para asegurar que se rendericen
-      const loadImageAsDataUrl = (url) => {
-        if (!url) return Promise.resolve('');
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            canvas.getContext('2d').drawImage(img, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
-          };
-          img.onerror = () => resolve('');
-          img.src = url;
-        });
-      };
-      
-      // Pre-cargar todos los logos
-      const logoUrls = new Set();
-      matches.forEach(m => {
-        const t1 = teamsList.find(t => t.id === m.equipo_1_id);
-        const t2 = teamsList.find(t => t.id === m.equipo_2_id);
-        if (t1?.logoUrl) logoUrls.add(t1.logoUrl);
-        if (t2?.logoUrl) logoUrls.add(t2.logoUrl);
-      });
-      const logoDataUrls = {};
-      await Promise.all(Array.from(logoUrls).map(async (url) => {
-        logoDataUrls[url] = await loadImageAsDataUrl(url);
-      }));
-      
-      const esc = (s) => String(s || '').replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
-      
-      const formatDateStr = (dateStr) => {
-        if (!dateStr) return '';
-        const date = new Date(dateStr + 'T00:00:00');
-        return date.toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' });
-      };
-      
-      const teamLookup = (id) => teamsList.find(t => t.id === id);
-      
-      const cardsHtml = matches.map((match) => {
-        const team1 = teamLookup(match.equipo_1_id);
-        const team2 = teamLookup(match.equipo_2_id);
-        const winner = match.goles_1 > match.goles_2 ? 1 : match.goles_1 < match.goles_2 ? 2 : 0;
-        
-        const logo1 = team1?.logoUrl ? logoDataUrls[team1.logoUrl] : '';
-        const logo2 = team2?.logoUrl ? logoDataUrls[team2.logoUrl] : '';
-        const name1 = team1?.name || 'Equipo Desconocido';
-        const name2 = team2?.name || 'Equipo Desconocido';
-        const player1 = match.jugador_1;
-        const player2 = match.jugador_2;
-        const dateStr = formatDateStr(match.fecha);
-        const nota = match.nota;
-        
-        const winnerStyle1 = winner === 1 ? 'opacity: 1;' : winner === 0 ? 'opacity: 0.9;' : 'opacity: 0.5;';
-        const winnerStyle2 = winner === 2 ? 'opacity: 1;' : winner === 0 ? 'opacity: 0.9;' : 'opacity: 0.5;';
-        
-        const scoreStyle1 = winner === 1 
-          ? 'background:#14532d;color:#4ade80;border:1px solid #22c55e;' 
-          : 'background:#18181b;color:#71717a;border:1px solid #27272a;';
-        const scoreStyle2 = winner === 2 
-          ? 'background:#14532d;color:#4ade80;border:1px solid #22c55e;' 
-          : 'background:#18181b;color:#71717a;border:1px solid #27272a;';
-        
-        return `
-          <div style="background:#18181b;border:1px solid #27272a;border-radius:12px;padding:16px;display:flex;flex-direction:column;">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
-              <div style="display:flex;align-items:center;justify-content:flex-end;flex:1;gap:12px;${winner === 1 ? 'opacity:1;' : winner === 0 ? 'opacity:0.9;' : 'opacity:0.5;'}">
-                <div style="text-align:right;min-width:0;">
-                  <p style="font-size:14px;font-weight:700;color:#fff;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${player1}</p>
-                  <p style="font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${team1?.name || 'Equipo Desconocido'}</p>
-                </div>
-                <div style="width:40px;height:40px;background:#27272a;border-radius:8px;padding:6px;display:flex;align-items:center;justify-content:center;border:1px solid #27272a;flex-shrink:0;">
-                  ${logo1 ? `<img src="${logo1}" alt="" style="width:100%;height:100%;object-fit:contain;" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#52525b;">⚽</div>'}
-                </div>
-              </div>
-              
-              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;min-width:120px;">
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <span style="font-size:28px;font-weight:900;padding:6px 12px;border-radius:8px;${match.goles_1 > match.goles_2 ? 'background:#14532d;color:#4ade80;border:1px solid #22c55e;' : 'background:#18181b;color:#71717a;border:1px solid #27272a;'}">${match.goles_1}</span>
-                  <span style="font-size:12px;font-weight:600;color:#71717a;">-</span>
-                  <span style="font-size:28px;font-weight:900;padding:6px 12px;border-radius:8px;${match.goles_2 > match.goles_1 ? 'background:#14532d;color:#4ade80;border:1px solid #22c55e;' : 'background:#18181b;color:#71717a;border:1px solid #27272a;'}">${match.goles_2}</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;color:#71717a;">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;width:12px;height:12px;vertical-align:middle;">
-                    <rect x="3" y="4" width="18" height="16" rx="2" ry="2"/>
-                    <path d="M16 2v4"/>
-                    <path d="M8 14h4"/>
-                  </svg>
-                  <span>${formatDateStr(match.fecha)}</span>
-                </div>
-              </div>
-              
-              <div style="display:flex;align-items:center;justify-content:flex-start;flex:1;gap:12px;${match.goles_2 > match.goles_1 ? 'opacity:1;' : match.goles_1 === match.goles_2 ? 'opacity:0.9;' : 'opacity:0.5;'}">
-                <div style="width:40px;height:40px;background:#27272a;border-radius:8px;padding:6px;display:flex;align-items:center;justify-content:center;border:1px solid #27272a;flex-shrink:0;">
-                  ${team2?.logoUrl && logoDataUrls[team2.logoUrl] ? `<img src="${logoDataUrls[team2.logoUrl]}" alt="" style="width:100%;height:100%;object-fit:contain;" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#52525b;">⚽</div>'}
-                </div>
-                <div style="text-align:left;min-width:0;">
-                  <p style="font-size:14px;font-weight:700;color:#fff;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${match.jugador_2}</p>
-                  <p style="font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${team2?.name || 'Equipo Desconocido'}</p>
-                </div>
-              </div>
-            </div>
-            
-            ${match.nota ? `
-              <div style="margin-top:12px;padding-top:8px;border-top:1px solid #27272a;display:flex;align-items:flex-start;gap:8px;">
-                <span style="font-size:10px;font-weight:700;color:#4ade80;background:rgba(74,222,128,0.1);padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;">Nota</span>
-                <p style="font-size:11px;color:#a1a1aa;font-style:italic;">"${match.nota}"</p>
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
-      
-      const html = `
-        <div style="width:1080px;background:#09090b;padding:24px;border-radius:16px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#fafafa;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px;padding-left:4px;">
-            <h3 style="font-size:14px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.1em;">Historial (${paginatedMatches.length})</h3>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">${cardsHtml}</div>
-        </div>
-      `;
-      
-      // Crear contenedor offscreen
-      const container = document.createElement('div');
-      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;';
-      container.innerHTML = html;
-      document.body.appendChild(container);
-      
-      // Esperar un frame para asegurar render
-      await new Promise(r => requestAnimationFrame(r));
-      
-      // Capturar
-      const dataUrl = await toPng(container, {
+      // Captura directa del DOM real escalado a 1080px width
+      // El contenido tiene ancho ~390px en móvil → se escala al canvas de 1080px
+      const dataUrl = await toPng(sourceList, {
         pixelRatio: 2,
         width: 1080,
-        imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+        backgroundColor: '#09090b',
       });
-      
-      // Limpiar
-      document.body.removeChild(container);
       
       // Descargar
       const link = document.createElement('a');
