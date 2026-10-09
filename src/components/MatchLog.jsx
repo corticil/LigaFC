@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { teams as defaultTeams, getTeamById as defaultGetTeamById } from '../data/teams';
 import { Calendar, Trash2, Users, Shield, RotateCcw, AlertCircle, Download, Check, BarChart3, Pencil } from 'lucide-react';
 import DatePicker from 'react-datepicker';
@@ -76,31 +77,147 @@ export default function MatchLog({
     });
   };
 
-  const historyRef = useRef(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
 
+  // Renderiza la lista de partidos en un contenedor offscreen a 1080px para captura de alta calidad
+  const renderOffscreenCapture = async () => {
+    const CAPTURE_WIDTH = 1080;
+    const container = document.createElement('div');
+    container.style.cssText = `
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: ${CAPTURE_WIDTH}px;
+      background: #09090b;
+      padding: 24px;
+      border-radius: 16px;
+      font-family: inherit;
+      z-index: -1;
+      pointer-events: none;
+    `;
+    document.body.appendChild(container);
+
+    // Función que genera el JSX de la lista para captura
+    const CaptureList = () => (
+      <div className="space-y-4" style={{ width: '100%' }}>
+        {paginatedMatches.map((match) => {
+          const team1 = teamLookup(match.equipo_1_id);
+          const team2 = teamLookup(match.equipo_2_id);
+          const winner = match.goles_1 > match.goles_2 ? 1 : match.goles_1 < match.goles_2 ? 2 : 0;
+
+          return (
+            <div 
+              key={match.id}
+              className="bg-zinc-900 border border-zinc-800/80 rounded-xl p-4 transition-all duration-300 shadow-md relative overflow-hidden"
+              style={{ display: 'flex', flexDirection: 'column' }}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div className={`flex items-center justify-end flex-1 gap-3 ${winner === 1 ? 'opacity-100' : winner === 2 ? 'opacity-50' : 'opacity-90'}`}>
+                  <div className="text-right min-w-0">
+                    <p className="text-sm font-bold text-white tracking-wide truncate">{match.jugador_1}</p>
+                    <p className="text-xs text-zinc-500 truncate">{team1?.name || 'Equipo Desconocido'}</p>
+                  </div>
+                  <div className="w-10 h-10 bg-zinc-950 rounded-lg p-1.5 flex items-center justify-center border border-zinc-800/80 flex-shrink-0">
+                    {team1 ? (
+                      <img 
+                        src={team1.logoUrl} 
+                        alt={team1.name} 
+                        className="w-full h-full object-contain"
+                        onError={(e) => { e.target.src = '/logos/real-madrid.svg'; }}
+                      />
+                    ) : (
+                      <Shield className="w-6 h-6 text-zinc-600" />
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center justify-center flex-shrink-0 min-w-[100px]">
+                  <div className="flex items-center gap-3">
+                    <span className={`text-2xl font-black px-3 py-1 rounded-lg ${
+                      winner === 1 
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                        : 'bg-zinc-950 text-zinc-400 border border-zinc-800/50'
+                    }`}>
+                      {match.goles_1}
+                    </span>
+                    <span className="text-xs font-semibold text-zinc-600">-</span>
+                    <span className={`text-2xl font-black px-3 py-1 rounded-lg ${
+                      winner === 2 
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                        : 'bg-zinc-950 text-zinc-400 border border-zinc-800/50'
+                    }`}>
+                      {match.goles_2}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 mt-2 text-xs text-zinc-500">
+                    <Calendar className="w-3 h-3 text-zinc-600" />
+                    <span>{formatDate(match.fecha)}</span>
+                  </div>
+                </div>
+
+                <div className={`flex items-center justify-start flex-1 gap-3 ${winner === 2 ? 'opacity-100' : winner === 1 ? 'opacity-50' : 'opacity-90'}`}>
+                  <div className="w-10 h-10 bg-zinc-950 rounded-lg p-1.5 flex items-center justify-center border border-zinc-800/80 flex-shrink-0">
+                    {team2 ? (
+                      <img 
+                        src={team2.logoUrl} 
+                        alt={team2.name} 
+                        className="w-full h-full object-contain"
+                        onError={(e) => { e.target.src = '/logos/real-madrid.svg'; }}
+                      />
+                    ) : (
+                      <Shield className="w-6 h-6 text-zinc-600" />
+                    )}
+                  </div>
+                  <div className="text-left min-w-0">
+                    <p className="text-sm font-bold text-white tracking-wide truncate">{match.jugador_2}</p>
+                    <p className="text-xs text-zinc-500 truncate">{team2?.name || 'Equipo Desconocido'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {match.nota && (
+                <div className="mt-3 pt-2.5 border-t border-zinc-800/50 flex items-start gap-2">
+                  <span className="text-xs uppercase font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded tracking-wider mt-0.5">Nota</span>
+                  <p className="text-xs text-zinc-400 italic">"{match.nota}"</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+
+    // Renderizar con Portal en el contenedor offscreen
+    const portal = createPortal(<CaptureList />, container);
+    const portalRoot = document.createElement('div');
+    container.appendChild(portalRoot);
+    
+    // Esperar un frame para que se renderice
+    await new Promise(r => requestAnimationFrame(r));
+    
+    // Capturar
+    const dataUrl = await toPng(container, {
+      backgroundColor: '#09090b',
+      pixelRatio: 2,
+      width: 1080,
+      imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+      filter: (node) => {
+        if (node.hasAttribute && node.hasAttribute('data-exclude')) return false;
+        return true;
+      }
+    });
+
+    // Limpiar
+    document.body.removeChild(container);
+
+    return dataUrl;
+  };
+
   const handleDownload = async () => {
-    if (!historyRef.current) return;
-    // Con suficientes partidos, reflow a 2 columnas durante la captura para una imagen más de celular
-    const captureClasses = paginatedMatches.length > 4
-      ? ['hide-scrollbars', 'add-capture-padding', 'capture-grid']
-      : ['hide-scrollbars', 'add-capture-padding'];
     try {
       setIsDownloading(true);
-      historyRef.current.classList.add(...captureClasses);
-      
-      const dataUrl = await toPng(historyRef.current, {
-        backgroundColor: '#09090b',
-        pixelRatio: 2,
-        imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-        filter: (node) => {
-          if (node.hasAttribute && node.hasAttribute('data-exclude')) return false;
-          return true;
-        }
-      });
-      
-      historyRef.current.classList.remove(...captureClasses);
+      const dataUrl = await renderOffscreenCapture();
       
       const link = document.createElement('a');
       link.href = dataUrl;
@@ -111,7 +228,6 @@ export default function MatchLog({
       setTimeout(() => setDownloaded(false), 2000);
     } catch (err) {
       console.error('Error al descargar el historial:', err);
-      if (historyRef.current) historyRef.current.classList.remove(...captureClasses);
     } finally {
       setIsDownloading(false);
     }
@@ -245,7 +361,7 @@ export default function MatchLog({
       </div>
 
       {/* Historial de Partidos */}
-      <div className="space-y-4" ref={historyRef}>
+      <div className="space-y-4">
         <div className="flex items-center justify-between gap-2 pl-1">
           <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">
             Historial ({filteredMatches.length})
@@ -282,7 +398,7 @@ export default function MatchLog({
             <p className="text-xs text-zinc-600 mt-1">Registra un partido en la pestaña de registro o cambia los filtros.</p>
           </div>
         ) : (
-          <div className="space-y-4" data-capture-list="true">
+          <div className="space-y-4">
             {paginatedMatches.map((match) => {
               const team1 = teamLookup(match.equipo_1_id);
               const team2 = teamLookup(match.equipo_2_id);

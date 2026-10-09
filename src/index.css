@@ -102,19 +102,7 @@ body {
   border-radius: 16px !important;
 }
 
-/* Durante la captura, reflow de la lista de historial a 2 columnas para una imagen más de celular */
-.capture-grid [data-capture-list] {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  align-items: stretch;
-}
-/* Neutralizar el margin-top que aplica space-y-4 a los hijos dentro del grid */
-.capture-grid [data-capture-list] > * {
-  margin-top: 0 !important;
-  min-width: 0;
-  overflow: visible;
-}
+
 
 /* Animación shake para login */
 @keyframes shake {
