@@ -91,59 +91,43 @@ const handleDownload = async () => {
         return;
       }
       
-      // 1. Crear wrapper offscreen con width 1080px y grid 2 columnas
-      //    Esto fuerza el ancho correcto y evita "solo se ve lo del celular"
-      const wrapper = document.createElement('div');
-      wrapper.style.cssText = `
-        position: fixed;
-        left: -9999px;
-        top: 0;
-        width: 1080px;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-        box-sizing: border-box;
-        padding: 24px;
-        background: #09090b;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        color: #fafafa;
+      // Opción A: Capturar sourceList directo con width 1080 y retraso para cargar imágenes
+      // Forzamos display: grid y grid-template-columns para asegurar 2 columnas en el canvas
+      sourceList.style.cssText = `
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 16px !important;
+        width: 1080px !important;
+        max-width: 1080px !important;
       `;
       
-      // 2. Clonar el contenido (no mover el DOM real = sin efectos permanentes)
-      const clonedList = sourceList.cloneNode(true);
+      // Esperar 800ms para que React termine de renderizar y las imágenes carguen
+      await new Promise(r => setTimeout(r, 800));
       
-      // 3. Neutralizar margin-top de space-y-4 en los hijos del clon
-      //    El sourceList original tiene class="space-y-4" que añade margen a los children
-      const clonedItems = clonedList.querySelectorAll(':scope > *');
-      clonedItems.forEach(el => {
-        el.style.marginTop = '0';
-      });
-      
-      // 4. Ocultar botones "Ver Stats" en el clon (para que no aparezcan en la captura)
-      const verStatsBtns = clonedList.querySelectorAll('button.font-semibold.text-emerald-400');
+      // Capturar (ocultar botones Ver Stats temporalmente con CSS)
+      const verStatsBtns = sourceList.querySelectorAll('button.font-semibold.text-emerald-400');
       const originalButtonStyles = [];
       verStatsBtns.forEach(btn => {
         originalButtonStyles.push(btn.style.cssText);
         btn.style.display = 'none';
       });
       
-      wrapper.appendChild(clonedList);
-      document.body.appendChild(wrapper);
-      
-      // 5. Esperar renderizado offscreen
-      await new Promise(r => requestAnimationFrame(r));
-      
-      // 6. Capturar con toPng (wrapper ya tiene width: 1080px y grid 2 columnas)
-      const dataUrl = await toPng(wrapper, {
+      const dataUrl = await toPng(sourceList, {
         pixelRatio: 2,
         width: 1080,
         backgroundColor: '#09090b',
       });
       
-      // 7. Limpiar wrapper (el sourceList original nunca se modificó)
-      document.body.removeChild(wrapper);
+      // Restaurar botones
+      verStatsBtns.forEach((btn, i) => {
+        btn.style.cssText = originalButtonStyles[i] || '';
+        btn.style.display = '';
+      });
       
-      // 8. Descargar
+      // Restaurar sourceList a su estado original
+      sourceList.style.cssText = '';
+      
+      // Descargar
       const link = document.createElement('a');
       link.href = dataUrl;
       link.download = `LigaFC_Historial.png`;
