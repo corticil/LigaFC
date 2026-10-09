@@ -104,7 +104,11 @@ const handleDownload = async () => {
         btn.style.display = 'none';
       });
       
-      // 3. Capturar con toPng
+      // 3. Forzar width 100% para evitar espacio vacío lateral en el canvas de 1080px
+      sourceList.style.width = '100%';
+      sourceList.style.maxWidth = '100%';
+      
+      // 4. Capturar con toPng
       const dataUrl = await toPng(sourceList, {
         pixelRatio: 2,
         width: 1080,
