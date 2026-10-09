@@ -79,6 +79,8 @@ export default function MatchLog({
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
 
+  const historyRef = useRef(null);
+
   const handleDownload = async () => {
     try {
       setIsDownloading(true);
@@ -369,7 +371,7 @@ export default function MatchLog({
             <p className="text-xs text-zinc-600 mt-1">Registra un partido en la pestaña de registro o cambia los filtros.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4" ref={historyRef}>
             {paginatedMatches.map((match) => {
               const team1 = teamLookup(match.equipo_1_id);
               const team2 = teamLookup(match.equipo_2_id);
