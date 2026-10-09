@@ -79,168 +79,84 @@ export default function MatchLog({
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
 
-  // Genera el HTML de la captura con estilos inline (template-based capture)
-  const buildCaptureHTML = () => {
-    const CAPTURE_WIDTH = 1080;
-    const matches = paginatedMatches;
-    
-    // Estilos inline para el contenedor principal
-    const containerStyle = `
-      width: 1080px;
-      background: #09090b;
-      padding: 24px;
-      border-radius: 16px;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      color: #fafafa;
-    `;
-    
-    // Estilos del header
-    const headerStyle = `
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 16px;
-      padding-left: 4px;
-    `;
-    
-    // Estilos del grid de tarjetas (2 columnas)
-    const gridStyle = `
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    `;
-    
-    // Estilos base de tarjeta
-    const cardBaseStyle = `
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-    `;
-    
-    // Helper para escapar HTML
-    const esc = (s) => String(s || '').replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
-    
-    // Helper para determinar color del ganador
-    const getWinnerStyle = (winner, side) => {
-      if (winner === side) return 'opacity: 1;';
-      if (winner === 0) return 'opacity: 0.9;';
-      return 'opacity: 0.5;';
-    };
-    
-    // Generar tarjetas
-    const cardsHtml = matches.map((match) => {
-      const team1 = teamLookup(match.equipo_1_id);
-      const team2 = teamLookup(match.equipo_2_id);
-      const winner = match.goles_1 > match.goles_2 ? 1 : match.goles_1 < match.goles_2 ? 2 : 0;
-      
-      const logo1 = team1?.logoUrl || '';
-      const logo2 = team2?.logoUrl || '';
-      const name1 = esc(team1?.name || 'Equipo Desconocido');
-      const name2 = esc(team2?.name || 'Equipo Desconocido');
-      const player1 = esc(match.jugador_1);
-      const player2 = esc(match.jugador_2);
-      const dateStr = esc(formatDate(match.fecha));
-      const nota = match.nota ? esc(match.nota) : null;
-      
-      const winnerStyle1 = getWinnerStyle(winner, 1);
-      const winnerStyle2 = getWinnerStyle(winner, 2);
-      
-      // Colores del marcador según ganador
-      const scoreStyle1 = winner === 1 
-        ? 'background:#14532d;color:#4ade80;border:1px solid #22c55e;' 
-        : 'background:#18181b;color:#71717a;border:1px solid #27272a;';
-      const scoreStyle2 = winner === 2 
-        ? 'background:#14532d;color:#4ade80;border:1px solid #22c55e;' 
-        : 'background:#18181b;color:#71717a;border:1px solid #27272a;';
-      
-      return `
-        <div style="${cardBaseStyle}">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
-            <!-- Jugador 1 + Equipo -->
-            <div style="display:flex;align-items:center;justify-content:flex-end;flex:1;gap:12px;${winnerStyle1}">
-              <div style="text-align:right;min-width:0;">
-                <p style="font-size:14px;font-weight:700;color:#fff;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${player1}</p>
-                <p style="font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name1}</p>
-              </div>
-              <div style="width:40px;height:40px;background:#27272a;border-radius:8px;padding:6px;display:flex;align-items:center;justify-content:center;border:1px solid #27272a;flex-shrink:0;">
-                ${logo1 ? `<img src="${esc(logo1)}" alt="${name1}" crossorigin="anonymous" style="width:100%;height:100%;object-fit:contain;" onerror="this.src='/logos/real-madrid.svg';" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#52525b;">⚽</div>'}
-              </div>
-            </div>
-            
-            <!-- Marcador -->
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;min-width:120px;">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:28px;font-weight:900;padding:6px 12px;border-radius:8px;${scoreStyle1}">${match.goles_1}</span>
-                <span style="font-size:12px;font-weight:600;color:#71717a;">-</span>
-                <span style="font-size:28px;font-weight:900;padding:6px 12px;border-radius:8px;${scoreStyle2}">${match.goles_2}</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;color:#71717a;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;width:12px;height:12px;vertical-align:middle;">
-                  <rect x="3" y="4" width="18" height="16" rx="2" ry="2"/>
-                  <path d="M16 2v4"/>
-                  <path d="M8 14h4"/>
-                </svg>
-                <span>${formatDate(match.fecha)}</span>
-              </div>
-            </div>
-            
-            <!-- Jugador 2 + Equipo -->
-            <div style="display:flex;align-items:center;justify-content:flex-start;flex:1;gap:12px;${winnerStyle2}">
-              <div style="width:40px;height:40px;background:#27272a;border-radius:8px;padding:6px;display:flex;align-items:center;justify-content:center;border:1px solid #27272a;flex-shrink:0;">
-                ${logo2 ? `<img src="${esc(logo2)}" alt="${name2}" crossorigin="anonymous" style="width:100%;height:100%;object-fit:contain;" onerror="this.src='/logos/real-madrid.svg';" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#52525b;">⚽</div>'}
-              </div>
-              <div style="text-align:left;min-width:0;">
-                <p style="font-size:14px;font-weight:700;color:#fff;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${player2}</p>
-                <p style="font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name2}</p>
-              </div>
-            </div>
-          </div>
-          
-          ${nota ? `
-            <div style="margin-top:12px;padding-top:8px;border-top:1px solid #27272a;display:flex;align-items:flex-start;gap:8px;">
-              <span style="font-size:10px;font-weight:700;color:#4ade80;background:rgba(74,222,128,0.1);padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;">Nota</span>
-              <p style="font-size:11px;color:#a1a1aa;font-style:italic;">"${nota}"</p>
-            </div>
-          ` : ''}
-        </div>
-      `;
-    }).join('');
-    
-    // HTML completo
-    return `
-      <div style="${containerStyle}">
-        <div style="${headerStyle}">
-          <h3 style="font-size:14px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.1em;">Historial (${matches.length})</h3>
-        </div>
-        <div style="${gridStyle}">${cardsHtml}</div>
-      </div>
-    `;
-  };
-
   const handleDownload = async () => {
     try {
       setIsDownloading(true);
       
-      // Generar HTML del template
-      const html = buildCaptureHTML();
+      const sourceList = historyRef.current?.querySelector('[data-capture-list]') || historyRef.current?.querySelector('.space-y-4');
+      if (!sourceList) {
+        console.error('No se encontró la lista de partidos para capturar');
+        return;
+      }
       
-      // Crear contenedor offscreen
+      // Guardar estilos originales
+      const originalStyles = {
+        width: sourceList.style.width,
+        display: sourceList.style.display,
+        gridTemplateColumns: sourceList.style.gridTemplateColumns,
+        gap: sourceList.style.gap,
+        marginTop: sourceList.style.marginTop,
+        padding: sourceList.style.padding,
+      };
+      
+      // Aplicar estilos de captura directamente al DOM real
+      sourceList.style.width = '1080px';
+      sourceList.style.display = 'grid';
+      sourceList.style.gridTemplateColumns = '1fr 1fr';
+      sourceList.style.gap = '16px';
+      sourceList.style.marginTop = '0';
+      
+      // Neutralizar margin-top de space-y-4 en los hijos
+      const items = sourceList.querySelectorAll(':scope > *');
+      const originalItemMargins = [];
+      items.forEach(el => {
+        originalItemMargins.push(el.style.marginTop);
+        el.style.marginTop = '0';
+      });
+      
+      // Forzar crossorigin en imágenes
+      sourceList.querySelectorAll('img').forEach(img => {
+        img.crossOrigin = 'anonymous';
+      });
+      
+      // Crear contenedor de captura que envuelva la lista
       const container = document.createElement('div');
       container.style.cssText = `
-        position:fixed;
-        left:-9999px;
-        top:0;
-        width:1080px;
-        background:#09090b;
-        padding:24px;
-        border-radius:16px;
+        position: fixed;
+        left: -9999px;
+        top: 0;
+        width: 1080px;
+        background: #09090b;
+        padding: 24px;
+        border-radius: 16px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: #fafafa;
       `;
-      container.innerHTML = html;
+      
+      // Header
+      const header = document.createElement('div');
+      header.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 16px;
+        padding-left: 4px;
+      `;
+      header.innerHTML = `<h3 style="font-size:14px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.1em;">Historial (${paginatedMatches.length})</h3>`;
+      
+      const wrapper = document.createElement('div');
+      wrapper.style.width = '100%';
+      wrapper.appendChild(sourceList); // Mover la lista real al contenedor
+      
+      container.appendChild(header);
+      container.appendChild(wrapper);
       document.body.appendChild(container);
+      
+      // Forzar crossorigin en imágenes
+      container.querySelectorAll('img').forEach(img => {
+        img.crossOrigin = 'anonymous';
+      });
       
       // Esperar a que carguen las imágenes
       const images = container.querySelectorAll('img');
@@ -260,8 +176,18 @@ export default function MatchLog({
         imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
       });
       
-      // Limpiar
+      // Restaurar DOM original
       document.body.removeChild(container);
+      wrapper.removeChild(sourceList); // Mover la lista de vuelta
+      sourceList.style.width = originalStyles.width;
+      sourceList.style.display = originalStyles.display;
+      sourceList.style.gridTemplateColumns = originalStyles.gridTemplateColumns;
+      sourceList.style.gap = originalStyles.gap;
+      sourceList.style.marginTop = originalStyles.marginTop;
+      sourceList.style.padding = originalStyles.padding;
+      items.forEach((el, i) => {
+        el.style.marginTop = originalItemMargins[i];
+      });
       
       // Descargar
       const link = document.createElement('a');
@@ -276,7 +202,7 @@ export default function MatchLog({
     } finally {
       setIsDownloading(false);
     }
-  };
+};
 
   return (
     <div className="space-y-6">
