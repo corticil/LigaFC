@@ -81,7 +81,7 @@ export default function MatchLog({
 
   const historyRef = useRef(null);
 
-  const handleDownload = async () => {
+const handleDownload = async () => {
     try {
       setIsDownloading(true);
       
@@ -91,37 +91,28 @@ export default function MatchLog({
         return;
       }
       
-      // Guardar estilos originales
-      const originalStyles = {
-        width: sourceList.style.width,
-        display: sourceList.style.display,
-        gridTemplateColumns: sourceList.style.gridTemplateColumns,
-        gap: sourceList.style.gap,
-        marginTop: sourceList.style.marginTop,
-        padding: sourceList.style.padding,
-      };
+      // CLONAR la lista en lugar de mover el DOM real
+      const clonedList = sourceList.cloneNode(true);
       
-      // Aplicar estilos de captura directamente al DOM real
-      sourceList.style.width = '1080px';
-      sourceList.style.display = 'grid';
-      sourceList.style.gridTemplateColumns = '1fr 1fr';
-      sourceList.style.gap = '16px';
-      sourceList.style.marginTop = '0';
+      // Aplicar estilos de captura al clon
+      clonedList.style.width = '1080px';
+      clonedList.style.display = 'grid';
+      clonedList.style.gridTemplateColumns = '1fr 1fr';
+      clonedList.style.gap = '16px';
+      clonedList.style.marginTop = '0';
       
-      // Neutralizar margin-top de space-y-4 en los hijos
-      const items = sourceList.querySelectorAll(':scope > *');
-      const originalItemMargins = [];
-      items.forEach(el => {
-        originalItemMargins.push(el.style.marginTop);
+      // Neutralizar margin-top de space-y-4 en los hijos del clon
+      const clonedItems = clonedList.querySelectorAll(':scope > *');
+      clonedItems.forEach(el => {
         el.style.marginTop = '0';
       });
       
-      // Forzar crossorigin en imágenes
-      sourceList.querySelectorAll('img').forEach(img => {
+      // Forzar crossorigin en imágenes del clon
+      clonedList.querySelectorAll('img').forEach(img => {
         img.crossOrigin = 'anonymous';
       });
       
-      // Crear contenedor de captura que envuelva la lista
+      // Crear contenedor de captura
       const container = document.createElement('div');
       container.style.cssText = `
         position: fixed;
@@ -149,7 +140,7 @@ export default function MatchLog({
       
       const wrapper = document.createElement('div');
       wrapper.style.width = '100%';
-      wrapper.appendChild(sourceList); // Mover la lista real al contenedor
+      wrapper.appendChild(clonedList); // Usar el clon, no el original
       
       container.appendChild(header);
       container.appendChild(wrapper);
@@ -178,18 +169,8 @@ export default function MatchLog({
         imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
       });
       
-      // Restaurar DOM original
+      // Limpiar contenedor temporal (el original no se tocó)
       document.body.removeChild(container);
-      wrapper.removeChild(sourceList); // Mover la lista de vuelta
-      sourceList.style.width = originalStyles.width;
-      sourceList.style.display = originalStyles.display;
-      sourceList.style.gridTemplateColumns = originalStyles.gridTemplateColumns;
-      sourceList.style.gap = originalStyles.gap;
-      sourceList.style.marginTop = originalStyles.marginTop;
-      sourceList.style.padding = originalStyles.padding;
-      items.forEach((el, i) => {
-        el.style.marginTop = originalItemMargins[i];
-      });
       
       // Descargar
       const link = document.createElement('a');
@@ -204,7 +185,7 @@ export default function MatchLog({
     } finally {
       setIsDownloading(false);
     }
-};
+  };
 
   return (
     <div className="space-y-6">
