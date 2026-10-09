@@ -82,9 +82,13 @@ export default function MatchLog({
 
   const handleDownload = async () => {
     if (!historyRef.current) return;
+    // Con suficientes partidos, reflow a 2 columnas durante la captura para una imagen más de celular
+    const captureClasses = paginatedMatches.length > 4
+      ? ['hide-scrollbars', 'add-capture-padding', 'capture-grid']
+      : ['hide-scrollbars', 'add-capture-padding'];
     try {
       setIsDownloading(true);
-      historyRef.current.classList.add('hide-scrollbars', 'add-capture-padding');
+      historyRef.current.classList.add(...captureClasses);
       
       const dataUrl = await toPng(historyRef.current, {
         backgroundColor: '#09090b',
@@ -96,7 +100,7 @@ export default function MatchLog({
         }
       });
       
-      historyRef.current.classList.remove('hide-scrollbars', 'add-capture-padding');
+      historyRef.current.classList.remove(...captureClasses);
       
       const link = document.createElement('a');
       link.href = dataUrl;
@@ -107,7 +111,7 @@ export default function MatchLog({
       setTimeout(() => setDownloaded(false), 2000);
     } catch (err) {
       console.error('Error al descargar el historial:', err);
-      if (historyRef.current) historyRef.current.classList.remove('hide-scrollbars', 'add-capture-padding');
+      if (historyRef.current) historyRef.current.classList.remove(...captureClasses);
     } finally {
       setIsDownloading(false);
     }
@@ -278,7 +282,7 @@ export default function MatchLog({
             <p className="text-xs text-zinc-600 mt-1">Registra un partido en la pestaña de registro o cambia los filtros.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4" data-capture-list="true">
             {paginatedMatches.map((match) => {
               const team1 = teamLookup(match.equipo_1_id);
               const team2 = teamLookup(match.equipo_2_id);
