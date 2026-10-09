@@ -167,7 +167,7 @@ export default function MatchLog({
                 <p style="font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name1}</p>
               </div>
               <div style="width:40px;height:40px;background:#27272a;border-radius:8px;padding:6px;display:flex;align-items:center;justify-content:center;border:1px solid #27272a;flex-shrink:0;">
-                ${logo1 ? `<img src="${esc(logo1)}" alt="${name1}" style="width:100%;height:100%;object-fit:contain;" onerror="this.src='/logos/real-madrid.svg';" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#52525b;">⚽</div>'}
+                ${logo1 ? `<img src="${esc(logo1)}" alt="${name1}" crossorigin="anonymous" style="width:100%;height:100%;object-fit:contain;" onerror="this.src='/logos/real-madrid.svg';" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#52525b;">⚽</div>'}
               </div>
             </div>
             
@@ -179,7 +179,11 @@ export default function MatchLog({
                 <span style="font-size:28px;font-weight:900;padding:6px 12px;border-radius:8px;${scoreStyle2}">${match.goles_2}</span>
               </div>
               <div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;color:#71717a;">
-                <span style="display:inline-block;width:12px;height:12px;background:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM3MTcxN2EiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzIiB5PSI0IiB3aWR0aD0iMTgiIGhlaWdodD0iMTYiIHJ4PSIyIiByeT0iMiIvPjxwYXRoIGQ9Ik0xNiAydjQiLz48cGF0aCBkPSJNOCAxNGg0Ii8+PC9zdmc+') center/contain no-repeat;"></span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;width:12px;height:12px;vertical-align:middle;">
+                  <rect x="3" y="4" width="18" height="16" rx="2" ry="2"/>
+                  <path d="M16 2v4"/>
+                  <path d="M8 14h4"/>
+                </svg>
                 <span>${formatDate(match.fecha)}</span>
               </div>
             </div>
@@ -187,7 +191,7 @@ export default function MatchLog({
             <!-- Jugador 2 + Equipo -->
             <div style="display:flex;align-items:center;justify-content:flex-start;flex:1;gap:12px;${winnerStyle2}">
               <div style="width:40px;height:40px;background:#27272a;border-radius:8px;padding:6px;display:flex;align-items:center;justify-content:center;border:1px solid #27272a;flex-shrink:0;">
-                ${logo2 ? `<img src="${esc(logo2)}" alt="${name2}" style="width:100%;height:100%;object-fit:contain;" onerror="this.src='/logos/real-madrid.svg';" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#52525b;">⚽</div>'}
+                ${logo2 ? `<img src="${esc(logo2)}" alt="${name2}" crossorigin="anonymous" style="width:100%;height:100%;object-fit:contain;" onerror="this.src='/logos/real-madrid.svg';" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#52525b;">⚽</div>'}
               </div>
               <div style="text-align:left;min-width:0;">
                 <p style="font-size:14px;font-weight:700;color:#fff;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${player2}</p>
@@ -226,7 +230,15 @@ export default function MatchLog({
       
       // Crear contenedor offscreen
       const container = document.createElement('div');
-      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;';
+      container.style.cssText = `
+        position:fixed;
+        left:-9999px;
+        top:0;
+        width:1080px;
+        background:#09090b;
+        padding:24px;
+        border-radius:16px;
+      `;
       container.innerHTML = html;
       document.body.appendChild(container);
       
@@ -238,9 +250,11 @@ export default function MatchLog({
         }))
       );
       
+      // Esperar un frame extra para asegurar render
+      await new Promise(r => requestAnimationFrame(r));
+      
       // Capturar
       const dataUrl = await toPng(container, {
-        backgroundColor: '#09090b',
         pixelRatio: 2,
         width: 1080,
         imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
