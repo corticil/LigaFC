@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { teams as defaultTeams, getTeamById as defaultGetTeamById } from '../data/teams';
 import { Calendar, Trash2, Users, Shield, RotateCcw, AlertCircle, Download, Check, BarChart3, Pencil } from 'lucide-react';
 import DatePicker from 'react-datepicker';
@@ -80,145 +79,177 @@ export default function MatchLog({
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
 
-  // Renderiza la lista de partidos en un contenedor offscreen a 1080px para captura de alta calidad
-  const renderOffscreenCapture = async () => {
+  // Genera el HTML de la captura con estilos inline (template-based capture)
+  const buildCaptureHTML = () => {
     const CAPTURE_WIDTH = 1080;
-    const container = document.createElement('div');
-    container.style.cssText = `
-      position: fixed;
-      left: -9999px;
-      top: 0;
-      width: ${CAPTURE_WIDTH}px;
+    const matches = paginatedMatches;
+    
+    // Estilos inline para el contenedor principal
+    const containerStyle = `
+      width: 1080px;
       background: #09090b;
       padding: 24px;
       border-radius: 16px;
-      font-family: inherit;
-      z-index: -1;
-      pointer-events: none;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fafafa;
     `;
-    document.body.appendChild(container);
-
-    // Función que genera el JSX de la lista para captura
-    const CaptureList = () => (
-      <div className="space-y-4" style={{ width: '100%' }}>
-        {paginatedMatches.map((match) => {
-          const team1 = teamLookup(match.equipo_1_id);
-          const team2 = teamLookup(match.equipo_2_id);
-          const winner = match.goles_1 > match.goles_2 ? 1 : match.goles_1 < match.goles_2 ? 2 : 0;
-
-          return (
-            <div 
-              key={match.id}
-              className="bg-zinc-900 border border-zinc-800/80 rounded-xl p-4 transition-all duration-300 shadow-md relative overflow-hidden"
-              style={{ display: 'flex', flexDirection: 'column' }}
-            >
-              <div className="flex items-center justify-between gap-4">
-                <div className={`flex items-center justify-end flex-1 gap-3 ${winner === 1 ? 'opacity-100' : winner === 2 ? 'opacity-50' : 'opacity-90'}`}>
-                  <div className="text-right min-w-0">
-                    <p className="text-sm font-bold text-white tracking-wide truncate">{match.jugador_1}</p>
-                    <p className="text-xs text-zinc-500 truncate">{team1?.name || 'Equipo Desconocido'}</p>
-                  </div>
-                  <div className="w-10 h-10 bg-zinc-950 rounded-lg p-1.5 flex items-center justify-center border border-zinc-800/80 flex-shrink-0">
-                    {team1 ? (
-                      <img 
-                        src={team1.logoUrl} 
-                        alt={team1.name} 
-                        className="w-full h-full object-contain"
-                        onError={(e) => { e.target.src = '/logos/real-madrid.svg'; }}
-                      />
-                    ) : (
-                      <Shield className="w-6 h-6 text-zinc-600" />
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center justify-center flex-shrink-0 min-w-[100px]">
-                  <div className="flex items-center gap-3">
-                    <span className={`text-2xl font-black px-3 py-1 rounded-lg ${
-                      winner === 1 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                        : 'bg-zinc-950 text-zinc-400 border border-zinc-800/50'
-                    }`}>
-                      {match.goles_1}
-                    </span>
-                    <span className="text-xs font-semibold text-zinc-600">-</span>
-                    <span className={`text-2xl font-black px-3 py-1 rounded-lg ${
-                      winner === 2 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                        : 'bg-zinc-950 text-zinc-400 border border-zinc-800/50'
-                    }`}>
-                      {match.goles_2}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1 mt-2 text-xs text-zinc-500">
-                    <Calendar className="w-3 h-3 text-zinc-600" />
-                    <span>{formatDate(match.fecha)}</span>
-                  </div>
-                </div>
-
-                <div className={`flex items-center justify-start flex-1 gap-3 ${winner === 2 ? 'opacity-100' : winner === 1 ? 'opacity-50' : 'opacity-90'}`}>
-                  <div className="w-10 h-10 bg-zinc-950 rounded-lg p-1.5 flex items-center justify-center border border-zinc-800/80 flex-shrink-0">
-                    {team2 ? (
-                      <img 
-                        src={team2.logoUrl} 
-                        alt={team2.name} 
-                        className="w-full h-full object-contain"
-                        onError={(e) => { e.target.src = '/logos/real-madrid.svg'; }}
-                      />
-                    ) : (
-                      <Shield className="w-6 h-6 text-zinc-600" />
-                    )}
-                  </div>
-                  <div className="text-left min-w-0">
-                    <p className="text-sm font-bold text-white tracking-wide truncate">{match.jugador_2}</p>
-                    <p className="text-xs text-zinc-500 truncate">{team2?.name || 'Equipo Desconocido'}</p>
-                  </div>
-                </div>
+    
+    // Estilos del header
+    const headerStyle = `
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding-left: 4px;
+    `;
+    
+    // Estilos del grid de tarjetas (2 columnas)
+    const gridStyle = `
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    `;
+    
+    // Estilos base de tarjeta
+    const cardBaseStyle = `
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    `;
+    
+    // Helper para escapar HTML
+    const esc = (s) => String(s || '').replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
+    
+    // Helper para determinar color del ganador
+    const getWinnerStyle = (winner, side) => {
+      if (winner === side) return 'opacity: 1;';
+      if (winner === 0) return 'opacity: 0.9;';
+      return 'opacity: 0.5;';
+    };
+    
+    // Generar tarjetas
+    const cardsHtml = matches.map((match) => {
+      const team1 = teamLookup(match.equipo_1_id);
+      const team2 = teamLookup(match.equipo_2_id);
+      const winner = match.goles_1 > match.goles_2 ? 1 : match.goles_1 < match.goles_2 ? 2 : 0;
+      
+      const logo1 = team1?.logoUrl || '';
+      const logo2 = team2?.logoUrl || '';
+      const name1 = esc(team1?.name || 'Equipo Desconocido');
+      const name2 = esc(team2?.name || 'Equipo Desconocido');
+      const player1 = esc(match.jugador_1);
+      const player2 = esc(match.jugador_2);
+      const dateStr = esc(formatDate(match.fecha));
+      const nota = match.nota ? esc(match.nota) : null;
+      
+      const winnerStyle1 = getWinnerStyle(winner, 1);
+      const winnerStyle2 = getWinnerStyle(winner, 2);
+      
+      // Colores del marcador según ganador
+      const scoreStyle1 = winner === 1 
+        ? 'background:#14532d;color:#4ade80;border:1px solid #22c55e;' 
+        : 'background:#18181b;color:#71717a;border:1px solid #27272a;';
+      const scoreStyle2 = winner === 2 
+        ? 'background:#14532d;color:#4ade80;border:1px solid #22c55e;' 
+        : 'background:#18181b;color:#71717a;border:1px solid #27272a;';
+      
+      return `
+        <div style="${cardBaseStyle}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+            <!-- Jugador 1 + Equipo -->
+            <div style="display:flex;align-items:center;justify-content:flex-end;flex:1;gap:12px;${winnerStyle1}">
+              <div style="text-align:right;min-width:0;">
+                <p style="font-size:14px;font-weight:700;color:#fff;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${player1}</p>
+                <p style="font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name1}</p>
               </div>
-
-              {match.nota && (
-                <div className="mt-3 pt-2.5 border-t border-zinc-800/50 flex items-start gap-2">
-                  <span className="text-xs uppercase font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded tracking-wider mt-0.5">Nota</span>
-                  <p className="text-xs text-zinc-400 italic">"{match.nota}"</p>
-                </div>
-              )}
+              <div style="width:40px;height:40px;background:#27272a;border-radius:8px;padding:6px;display:flex;align-items:center;justify-content:center;border:1px solid #27272a;flex-shrink:0;">
+                ${logo1 ? `<img src="${esc(logo1)}" alt="${name1}" style="width:100%;height:100%;object-fit:contain;" onerror="this.src='/logos/real-madrid.svg';" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#52525b;">⚽</div>'}
+              </div>
             </div>
-          );
-        })}
+            
+            <!-- Marcador -->
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;min-width:120px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:28px;font-weight:900;padding:6px 12px;border-radius:8px;${scoreStyle1}">${match.goles_1}</span>
+                <span style="font-size:12px;font-weight:600;color:#71717a;">-</span>
+                <span style="font-size:28px;font-weight:900;padding:6px 12px;border-radius:8px;${scoreStyle2}">${match.goles_2}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;color:#71717a;">
+                <span style="display:inline-block;width:12px;height:12px;background:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM3MTcxN2EiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzIiB5PSI0IiB3aWR0aD0iMTgiIGhlaWdodD0iMTYiIHJ4PSIyIiByeT0iMiIvPjxwYXRoIGQ9Ik0xNiAydjQiLz48cGF0aCBkPSJNOCAxNGg0Ii8+PC9zdmc+') center/contain no-repeat;"></span>
+                <span>${formatDate(match.fecha)}</span>
+              </div>
+            </div>
+            
+            <!-- Jugador 2 + Equipo -->
+            <div style="display:flex;align-items:center;justify-content:flex-start;flex:1;gap:12px;${winnerStyle2}">
+              <div style="width:40px;height:40px;background:#27272a;border-radius:8px;padding:6px;display:flex;align-items:center;justify-content:center;border:1px solid #27272a;flex-shrink:0;">
+                ${logo2 ? `<img src="${esc(logo2)}" alt="${name2}" style="width:100%;height:100%;object-fit:contain;" onerror="this.src='/logos/real-madrid.svg';" />` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#52525b;">⚽</div>'}
+              </div>
+              <div style="text-align:left;min-width:0;">
+                <p style="font-size:14px;font-weight:700;color:#fff;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${player2}</p>
+                <p style="font-size:12px;color:#71717a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name2}</p>
+              </div>
+            </div>
+          </div>
+          
+          ${nota ? `
+            <div style="margin-top:12px;padding-top:8px;border-top:1px solid #27272a;display:flex;align-items:flex-start;gap:8px;">
+              <span style="font-size:10px;font-weight:700;color:#4ade80;background:rgba(74,222,128,0.1);padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;">Nota</span>
+              <p style="font-size:11px;color:#a1a1aa;font-style:italic;">"${nota}"</p>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+    
+    // HTML completo
+    return `
+      <div style="${containerStyle}">
+        <div style="${headerStyle}">
+          <h3 style="font-size:14px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.1em;">Historial (${matches.length})</h3>
+        </div>
+        <div style="${gridStyle}">${cardsHtml}</div>
       </div>
-    );
-
-    // Renderizar con Portal en el contenedor offscreen
-    const portal = createPortal(<CaptureList />, container);
-    const portalRoot = document.createElement('div');
-    container.appendChild(portalRoot);
-    
-    // Esperar un frame para que se renderice
-    await new Promise(r => requestAnimationFrame(r));
-    
-    // Capturar
-    const dataUrl = await toPng(container, {
-      backgroundColor: '#09090b',
-      pixelRatio: 2,
-      width: 1080,
-      imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-      filter: (node) => {
-        if (node.hasAttribute && node.hasAttribute('data-exclude')) return false;
-        return true;
-      }
-    });
-
-    // Limpiar
-    document.body.removeChild(container);
-
-    return dataUrl;
+    `;
   };
 
   const handleDownload = async () => {
     try {
       setIsDownloading(true);
-      const dataUrl = await renderOffscreenCapture();
       
+      // Generar HTML del template
+      const html = buildCaptureHTML();
+      
+      // Crear contenedor offscreen
+      const container = document.createElement('div');
+      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;';
+      container.innerHTML = html;
+      document.body.appendChild(container);
+      
+      // Esperar a que carguen las imágenes
+      const images = container.querySelectorAll('img');
+      await Promise.all(Array.from(images).map(img => 
+        img.complete ? Promise.resolve() : new Promise(resolve => {
+          img.onload = img.onerror = resolve;
+        }))
+      );
+      
+      // Capturar
+      const dataUrl = await toPng(container, {
+        backgroundColor: '#09090b',
+        pixelRatio: 2,
+        width: 1080,
+        imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+      });
+      
+      // Limpiar
+      document.body.removeChild(container);
+      
+      // Descargar
       const link = document.createElement('a');
       link.href = dataUrl;
       link.download = `LigaFC_Historial.png`;
