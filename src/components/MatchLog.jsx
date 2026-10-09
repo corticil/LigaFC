@@ -91,12 +91,20 @@ const handleDownload = async () => {
         return;
       }
       
-      // 1. Forzar grid 2-columnas para evitar "una sola fila"
-      sourceList.style.display = 'grid';
-      sourceList.style.gridTemplateColumns = '1fr 1fr';
-      sourceList.style.gap = '16px';
+      // 1. Guardar estilos originales SOURCE LIST para restaurar después
+      const originalSourceListStyle = sourceList.style.cssText;
       
-      // 2. Ocultar temporalmente los botones "Ver Stats" para que no aparezcan en la captura
+      // 2. Aplicar estilos de captura SOBRE el DOM real (temporales)
+      sourceList.style.cssText = `
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      `;
+      
+      // 3. Ocultar temporalmente los botones "Ver Stats" para que no aparezcan en la captura
       const verStatsBtns = sourceList.querySelectorAll('button.font-semibold.text-emerald-400');
       const originalButtonStyles = [];
       verStatsBtns.forEach(btn => {
@@ -104,24 +112,24 @@ const handleDownload = async () => {
         btn.style.display = 'none';
       });
       
-      // 3. Forzar width 100% para evitar espacio vacío lateral en el canvas de 1080px
-      sourceList.style.width = '100%';
-      sourceList.style.maxWidth = '100%';
-      
-      // 4. Capturar con toPng
+      // 4. Capturar con toPng (ahora sourceList tiene grid 2 columnas + width 100%)
       const dataUrl = await toPng(sourceList, {
         pixelRatio: 2,
         width: 1080,
         backgroundColor: '#09090b',
       });
       
-      // 4. Restaurar botones "Ver Stats"
+      // 5. Restaurar botones "Ver Stats"
       verStatsBtns.forEach((btn, i) => {
         btn.style.cssText = originalButtonStyles[i] || '';
         btn.style.display = '';
       });
       
-      // 5. Descargar
+      // 6. --- MUY IMPORTANTE: Restaurar estilos originales del sourceList ---
+      // Esto evita que el historial quede permanentemente en grid 2 columnas
+      sourceList.style.cssText = originalSourceListStyle;
+      
+      // 7. Descargar
       const link = document.createElement('a');
       link.href = dataUrl;
       link.download = `LigaFC_Historial.png`;
