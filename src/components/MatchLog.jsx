@@ -85,7 +85,7 @@ export default function MatchLog({
     try {
       setIsDownloading(true);
       
-      const sourceList = historyRef.current?.querySelector('[data-capture-list]') || historyRef.current?.querySelector('.space-y-4');
+      const sourceList = historyRef.current;
       if (!sourceList) {
         console.error('No se encontró la lista de partidos para capturar');
         return;
