@@ -91,15 +91,33 @@ const handleDownload = async () => {
         return;
       }
       
-      // Captura directa del DOM real escalado a 1080px width
-      // El contenido tiene ancho ~390px en móvil → se escala al canvas de 1080px
+      // 1. Forzar grid 2-columnas para evitar "una sola fila"
+      sourceList.style.display = 'grid';
+      sourceList.style.gridTemplateColumns = '1fr 1fr';
+      sourceList.style.gap = '16px';
+      
+      // 2. Ocultar temporalmente los botones "Ver Stats" para que no aparezcan en la captura
+      const verStatsBtns = sourceList.querySelectorAll('button.font-semibold.text-emerald-400');
+      const originalButtonStyles = [];
+      verStatsBtns.forEach(btn => {
+        originalButtonStyles.push(btn.style.cssText);
+        btn.style.display = 'none';
+      });
+      
+      // 3. Capturar con toPng
       const dataUrl = await toPng(sourceList, {
         pixelRatio: 2,
         width: 1080,
         backgroundColor: '#09090b',
       });
       
-      // Descargar
+      // 4. Restaurar botones "Ver Stats"
+      verStatsBtns.forEach((btn, i) => {
+        btn.style.cssText = originalButtonStyles[i] || '';
+        btn.style.display = '';
+      });
+      
+      // 5. Descargar
       const link = document.createElement('a');
       link.href = dataUrl;
       link.download = `LigaFC_Historial.png`;
