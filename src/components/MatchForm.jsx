@@ -1,35 +1,58 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusCircle, Trophy, User } from 'lucide-react';
+import { prioritizeTeams } from '../data/teams';
 
 export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], players = [], teamsList = [] }) {
   const navigate = useNavigate();
-  const [jugador1, setJugador1] = useState(players[0]?.nombre || players[0] || '');
-  const [jugador1Id, setJugador1Id] = useState(players[0]?.id || null);
-  const [jugador2, setJugador2] = useState(players[1]?.nombre || players[1] || '');
-  const [jugador2Id, setJugador2Id] = useState(players[1]?.id || null);
-  const [equipo1Id, setEquipo1Id] = useState(teamsList[0]?.id || '');
-  const [equipo2Id, setEquipo2Id] = useState(teamsList[1]?.id || '');
+  const orderedTeams = useMemo(() => prioritizeTeams(teamsList), [teamsList]);
+
+  const [jugador1, setJugador1] = useState('');
+  const [jugador1Id, setJugador1Id] = useState(null);
+  const [jugador2, setJugador2] = useState('');
+  const [jugador2Id, setJugador2Id] = useState(null);
+  const [equipo1Id, setEquipo1Id] = useState('');
+  const [equipo2Id, setEquipo2Id] = useState('');
   const [goles1, setGoles1] = useState('');
   const [goles2, setGoles2] = useState('');
   const [nota, setNota] = useState('');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [torneoId, setTorneoId] = useState('');
+
+  // Sincronizar equipos iniciales si aún no se seleccionaron
+  useEffect(() => {
+    if (!equipo1Id && orderedTeams.length > 0) {
+      setEquipo1Id(orderedTeams[0].id);
+    }
+    if (!equipo2Id && orderedTeams.length > 1) {
+      setEquipo2Id(orderedTeams[1].id);
+    }
+  }, [orderedTeams, equipo1Id, equipo2Id]);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState('');
 
   // Buscar los objetos de equipo seleccionados para mostrar sus logos
-  const selectedTeam1 = teamsList.find(t => t.id === equipo1Id);
-  const selectedTeam2 = teamsList.find(t => t.id === equipo2Id);
+  const selectedTeam1 = orderedTeams.find(t => t.id === equipo1Id);
+  const selectedTeam2 = orderedTeams.find(t => t.id === equipo2Id);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
     setValidationError('');
 
+    if (!jugador1 || !jugador2) {
+      setValidationError('Debes seleccionar ambos jugadores.');
+      return;
+    }
+
     if (jugador1 === jugador2) {
       setValidationError('Un jugador no puede jugar contra sí mismo.');
+      return;
+    }
+
+    if (!equipo1Id || !equipo2Id) {
+      setValidationError('Debes seleccionar ambos equipos.');
       return;
     }
 
@@ -43,11 +66,6 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], pla
 
     if (isNaN(g1) || g1 < 0 || isNaN(g2) || g2 < 0) {
       setValidationError('Los goles deben ser números mayores o iguales a 0.');
-      return;
-    }
-
-    if (!equipo1Id || !equipo2Id) {
-      setValidationError('Debes seleccionar ambos equipos.');
       return;
     }
 
@@ -70,10 +88,15 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], pla
     setIsSubmitting(false);
 
     if (result.success) {
+      setJugador1('');
+      setJugador1Id(null);
+      setJugador2('');
+      setJugador2Id(null);
       setGoles1('');
       setGoles2('');
       setNota('');
       setTorneoId('');
+      if (onSuccess) onSuccess();
       navigate('/');
     } else {
       setValidationError(result.error || 'Ocurrió un error al registrar el partido.');
@@ -116,17 +139,22 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], pla
                 value={jugador1}
                 onChange={(e) => {
                   const val = e.target.value;
+                  if (!val) {
+                    setJugador1('');
+                    setJugador1Id(null);
+                    return;
+                  }
                   setJugador1(val);
                   const found = players.find(p => (p.nombre || p) === val);
                   setJugador1Id(found?.id || null);
                   if (val === jugador2) {
-                    const other = players.find(p => (p.nombre || p) !== val);
-                    setJugador2(other?.nombre || other || '');
-                    setJugador2Id(other?.id || null);
+                    setJugador2('');
+                    setJugador2Id(null);
                   }
                 }}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
               >
+                <option value="">-- Seleccionar Jugador --</option>
                 {players.map(player => {
                   const name = player.nombre || player;
                   const id = player.id || player;
@@ -147,7 +175,7 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], pla
                 onChange={(e) => setEquipo1Id(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
               >
-                {teamsList.map(team => (
+                {orderedTeams.map(team => (
                   <option key={team.id} value={team.id}>
                     {team.name}
                   </option>
@@ -204,17 +232,22 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], pla
                 value={jugador2}
                 onChange={(e) => {
                   const val = e.target.value;
+                  if (!val) {
+                    setJugador2('');
+                    setJugador2Id(null);
+                    return;
+                  }
                   setJugador2(val);
                   const found = players.find(p => (p.nombre || p) === val);
                   setJugador2Id(found?.id || null);
                   if (val === jugador1) {
-                    const other = players.find(p => (p.nombre || p) !== val);
-                    setJugador1(other?.nombre || other || '');
-                    setJugador1Id(other?.id || null);
+                    setJugador1('');
+                    setJugador1Id(null);
                   }
                 }}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
               >
+                <option value="">-- Seleccionar Jugador --</option>
                 {players.map(player => {
                   const name = player.nombre || player;
                   const id = player.id || player;
@@ -235,7 +268,7 @@ export default function MatchForm({ onAddMatch, onSuccess, tournaments = [], pla
                 onChange={(e) => setEquipo2Id(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
               >
-                {teamsList.map(team => (
+                {orderedTeams.map(team => (
                   <option key={team.id} value={team.id}>
                     {team.name}
                   </option>

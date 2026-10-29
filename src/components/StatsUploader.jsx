@@ -1,7 +1,7 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Image, Loader2, AlertCircle, BarChart3, FileCheck, X, RotateCcw, User, Camera } from 'lucide-react';
-import { teams as defaultTeams } from '../data/teams';
+import { teams as defaultTeams, prioritizeTeams } from '../data/teams';
 import { PLAYERS as defaultPlayers } from '../data/players';
 import { extractStatsFromImage, saveStatsToSupabase, compressImage, GEMINI_MODELS } from '../services/statsProcessor';
 
@@ -27,6 +27,8 @@ function findTeam(name, teamsRef) {
  */
 export default function StatsUploader({ onAddMatch, tournaments = [], players = defaultPlayers, teamsList = defaultTeams }) {
   const navigate = useNavigate();
+  const orderedTeams = useMemo(() => prioritizeTeams(teamsList), [teamsList]);
+
   const [image, setImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [status, setStatus] = useState('idle');
@@ -37,10 +39,10 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
   const inputRef = useRef(null);
   const cameraRef = useRef(null);
 
-  const [jugador1, setJugador1] = useState(players[0]?.nombre || players[0] || '');
-  const [jugador1Id, setJugador1Id] = useState(players[0]?.id || null);
-  const [jugador2, setJugador2] = useState(players[players.length - 1]?.nombre || players[players.length - 1] || '');
-  const [jugador2Id, setJugador2Id] = useState(players[players.length - 1]?.id || null);
+  const [jugador1, setJugador1] = useState('');
+  const [jugador1Id, setJugador1Id] = useState(null);
+  const [jugador2, setJugador2] = useState('');
+  const [jugador2Id, setJugador2Id] = useState(null);
   const [team1Id, setTeam1Id] = useState('');
   const [team2Id, setTeam2Id] = useState('');
   const [torneoId, setTorneoId] = useState('');
@@ -57,6 +59,10 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
     setParsedData(null);
     setErrorMsg('');
     setStep('upload');
+    setJugador1('');
+    setJugador1Id(null);
+    setJugador2('');
+    setJugador2Id(null);
   }, [previewUrl]);
 
   // Maneja la subida de imagen: comprime y genera preview inmediata
@@ -94,17 +100,19 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
     try {
       const data = await extractStatsFromImage(image, geminiModel);
       setParsedData(data);
-      const matched1 = findTeam(data.nombre_local, teamsList);
-      const matched2 = findTeam(data.nombre_visitante, teamsList);
+      const matched1 = findTeam(data.nombre_local, orderedTeams);
+      const matched2 = findTeam(data.nombre_visitante, orderedTeams);
       if (matched1) setTeam1Id(matched1.id);
+      else if (orderedTeams[0]) setTeam1Id(orderedTeams[0].id);
       if (matched2) setTeam2Id(matched2.id);
+      else if (orderedTeams[1]) setTeam2Id(orderedTeams[1].id);
       setStep('confirm');
       setStatus('idle');
     } catch (err) {
       setErrorMsg(err.message || 'Error al procesar la imagen');
       setStatus('error');
     }
-  }, [image, geminiModel]);
+  }, [image, geminiModel, orderedTeams]);
 
   // Guarda el partido + estadísticas en DB y redirige al home
   const handleConfirm = useCallback(async () => {
@@ -112,12 +120,17 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
     if (status === 'saving') return;
 
     if (!jugador1 || !jugador2) {
-      setErrorMsg('Seleccioná ambos jugadores.');
+      setErrorMsg('Debes seleccionar ambos jugadores.');
       setStatus('error');
       return;
     }
     if (jugador1 === jugador2) {
       setErrorMsg('Un jugador no puede jugar contra sí mismo.');
+      setStatus('error');
+      return;
+    }
+    if (!team1Id || !team2Id) {
+      setErrorMsg('Debes seleccionar ambos equipos.');
       setStatus('error');
       return;
     }
@@ -170,21 +183,17 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
   // Si el jugador elegido ya está en el otro lado, el otro lado se reasigna
   // al primer jugador distinto disponible (nunca queda vacío ni duplicado).
   const selectPlayer = (side, val) => {
-    const otherSide = side === 'jugador1' ? 'jugador2' : 'jugador1';
-    const currentOther = side === 'jugador1' ? jugador2 : jugador1;
+    if (!val) {
+      if (side === 'jugador1') { setJugador1(''); setJugador1Id(null); }
+      else { setJugador2(''); setJugador2Id(null); }
+      return;
+    }
 
+    const currentOther = side === 'jugador1' ? jugador2 : jugador1;
+    // Si ya estaba en el otro lado, limpiar el otro lado
     if (val === currentOther) {
-      const others = players.filter(p => (p.nombre || p) !== val);
-      if (others.length > 0) {
-        const other = others[0];
-        if (side === 'jugador1') {
-          setJugador2(other.nombre || other);
-          setJugador2Id(other.id || null);
-        } else {
-          setJugador1(other.nombre || other);
-          setJugador1Id(other.id || null);
-        }
-      }
+      if (side === 'jugador1') { setJugador2(''); setJugador2Id(null); }
+      else { setJugador1(''); setJugador1Id(null); }
     }
 
     const found = players.find(p => (p.nombre || p) === val);
@@ -215,7 +224,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
           <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-xl p-4 text-center">
             <div className="flex items-center justify-center gap-4">
               <div className="flex-1 text-right">
-                <p className="text-sm font-bold text-white">{teamsList.find(t => t.id === team1Id)?.name || localName}</p>
+                <p className="text-sm font-bold text-white">{orderedTeams.find(t => t.id === team1Id)?.name || localName}</p>
               </div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-3xl font-black text-emerald-400">{parsedData.goles_local}</span>
@@ -223,7 +232,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
                 <span className="text-3xl font-black text-indigo-400">{parsedData.goles_visitante}</span>
               </div>
               <div className="flex-1 text-left">
-                <p className="text-sm font-bold text-white">{teamsList.find(t => t.id === team2Id)?.name || visitName}</p>
+                <p className="text-sm font-bold text-white">{orderedTeams.find(t => t.id === team2Id)?.name || visitName}</p>
               </div>
             </div>
             {parsedData.tiempo_partido && (
@@ -236,14 +245,14 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
               <label className="block text-[10px] text-zinc-500 mb-1.5 font-medium uppercase tracking-wider">Equipo Local</label>
               <select value={team1Id} onChange={e => setTeam1Id(e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
-                {teamsList.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                {orderedTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-[10px] text-zinc-500 mb-1.5 font-medium uppercase tracking-wider">Equipo Visitante</label>
               <select value={team2Id} onChange={e => setTeam2Id(e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
-                {teamsList.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                {orderedTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
           </div>
@@ -255,6 +264,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
               </label>
               <select value={jugador1} onChange={e => selectPlayer('jugador1', e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
+                <option value="">-- Seleccionar Jugador --</option>
                 {players.map(p => {
                   const name = p.nombre || p;
                   const id = p.id || p;
@@ -268,6 +278,7 @@ export default function StatsUploader({ onAddMatch, tournaments = [], players = 
               </label>
               <select value={jugador2} onChange={e => selectPlayer('jugador2', e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
+                <option value="">-- Seleccionar Jugador --</option>
                 {players.map(p => {
                   const name = p.nombre || p;
                   const id = p.id || p;

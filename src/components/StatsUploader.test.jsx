@@ -9,6 +9,7 @@ vi.mock('../data/teams', () => ({
     { id: 't2', name: 'Barcelona' },
   ],
   getTeamById: () => null,
+  prioritizeTeams: (list) => list,
 }));
 
 vi.mock('../data/players', () => ({
